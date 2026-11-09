@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 5: Deploy | Bitovi</title>
+<meta name="description" content="AI in the PR review loop, hooks as approval gates, and CI/CD with tiered autonomy.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+/* Deploy page only */
+.pb-play + .pb-play { margin-top: 40px; }
+.pb-play { scroll-margin-top: 70px; }
+.dep-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.dep-pick a { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--pb-line); border-radius: 14px; text-decoration: none; color: var(--pb-ink); background: #fff; transition: border-color .2s, transform .2s var(--pb-ease); }
+.dep-pick a:hover { border-color: var(--pb-red); transform: translateY(-2px); }
+.dep-pick i { flex: none; font-style: normal; width: 32px; height: 32px; border-radius: 10px; background: var(--pb-ink); color: #fff; font-family: var(--pb-display); font-weight: 800; display: grid; place-items: center; }
+.dep-pick b { display: block; font-family: var(--pb-display); font-size: 16px; }
+.dep-pick small { color: var(--pb-muted); font-size: 14px; line-height: 1.4; display: block; }
+.dep-lanes { display: grid; gap: 14px; margin-top: 16px; }
+.dep-lane small { display: block; font-size: 13px; margin-bottom: 4px; }
+.dep-lane .tr { display: flex; gap: 6px; flex-wrap: wrap; }
+.dep-lane .tr span { font-size: 13px; padding: 3px 9px; border-radius: 6px; background: rgba(148,163,184,.25); }
+.dep-lane.ai .tr span { background: var(--pb-agent-bg); color: var(--pb-agent); font-weight: 700; }
+.dep-lane.ai .tr span.h { background: var(--pb-human-bg); color: var(--pb-human); }
+.dep-lane .tr span { opacity: 0; transform: translateY(6px); transition: opacity .5s, transform .5s var(--pb-ease); }
+.in .dep-lane .tr span { opacity: 1; transform: none; }
+.in .dep-lane .tr span:nth-child(2) { transition-delay: .15s; } .in .dep-lane .tr span:nth-child(3) { transition-delay: .3s; } .in .dep-lane .tr span:nth-child(4) { transition-delay: .45s; }
+.dep-demo { border-top: 1px solid var(--pb-line); padding: 26px 28px 30px; background: var(--pb-soft); }
+.dep-demo h4 { font-size: 18px; margin-bottom: 4px; }
+.dep-demo > p { color: var(--pb-muted); font-size: 15px; }
+.dep-track { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 10px; }
+.dep-st { position: relative; background: #fff; border: 1px solid var(--pb-line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-height: 92px; }
+.dep-st:not(:last-child)::after { content: ""; position: absolute; top: 50%; right: -11px; width: 12px; height: 3px; background: var(--pb-line); transition: background .3s; z-index: 1; }
+.dep-st.done:not(:last-child)::after, .dep-st.on:not(:last-child)::after { background: var(--pb-agent); }
+.dep-sb { font: inherit; font-family: var(--pb-display); font-weight: 700; font-size: 14px; color: var(--pb-ink); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; line-height: 1.25; }
+.dep-sb b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--pb-old-bg); color: var(--pb-muted); font-size: 12px; margin-right: 6px; }
+.dep-st.on { border-color: var(--pb-ink); box-shadow: var(--pb-shadow); }
+.dep-st.on .dep-sb b { background: var(--pb-red); color: #fff; }
+.dep-st.done .dep-sb b { background: var(--pb-agent); color: #fff; }
+.dep-st small { font-size: 12.5px; color: var(--pb-muted); line-height: 1.35; }
+.dep-tok { align-self: flex-start; margin-top: auto; opacity: 0; transform: translateX(-24px); transition: opacity .4s, transform .6s var(--pb-ease); }
+.dep-st.on .dep-tok { opacity: 1; transform: none; }
+.dep-cap { margin-top: 16px; background: #fff; border: 1px solid var(--pb-line); border-radius: 12px; padding: 14px 18px; font-size: 16px; min-height: 76px; animation: pb-fade .35s var(--pb-ease); }
+.dep-find { display: grid; gap: 8px; margin-top: 14px; }
+.dep-fr { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 12px; align-items: start; background: #fff; border: 1px solid var(--pb-line); border-radius: 12px; padding: 10px 14px; opacity: .25; transform: translateX(-10px); transition: opacity .4s, transform .4s var(--pb-ease); font-size: 14px; }
+.dep-fr.show { opacity: 1; transform: none; }
+.dep-fr code { font-size: 12.5px; color: var(--pb-muted); overflow-wrap: anywhere; }
+.dep-fr .sev { font-family: var(--pb-display); font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 6px; text-align: center; background: var(--pb-human-bg); color: var(--pb-human); width: fit-content; }
+.dep-fr .sev.nit { background: var(--pb-old-bg); color: var(--pb-muted); }
+.dep-fr .iss { grid-column: 2; }
+.dep-sum { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; opacity: .25; transition: opacity .4s; }
+.dep-sum.show { opacity: 1; }
+/* hook gate */
+.dep-gate { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.2fr) 40px minmax(0, 1fr); gap: 0; align-items: stretch; margin-top: 18px; }
+.dep-box { background: #fff; border: 1px solid var(--pb-line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: border-color .3s, background .3s; }
+.dep-box h5 { margin: 0; font-family: var(--pb-display); font-size: 15px; color: var(--pb-ink); }
+.dep-box p { font-size: 14.5px; }
+.dep-arr { display: grid; place-items: center; color: var(--pb-muted); font-size: 22px; }
+.dep-box.gate { border: 2px solid var(--pb-gate); background: #fffbeb; }
+.dep-verdict { font-family: var(--pb-display); font-weight: 800; font-size: 18px; padding: 8px 12px; border-radius: 10px; width: fit-content; background: var(--pb-old-bg); color: var(--pb-muted); transition: background .3s, color .3s; }
+.dep-verdict.allow { background: var(--pb-agent-bg); color: var(--pb-agent); }
+.dep-verdict.deny { background: var(--pb-human-bg); color: var(--pb-human); }
+.dep-verdict.ask, .dep-verdict.wait { background: var(--pb-gate-bg); color: var(--pb-gate); }
+.dep-box.tgt.ok { border-color: var(--pb-agent); background: #f0fdfa; }
+.dep-box.tgt.held { border-color: var(--pb-human); background: #fff1f2; }
+.dep-people { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; font-size: 14px; }
+.dep-people .pb-chip, .dep-people .pb-file { opacity: .35; transition: opacity .3s; }
+.dep-people .lit { opacity: 1; }
+.dep-callout { margin-top: 16px; border-left: 4px solid var(--pb-gate); background: var(--pb-gate-bg); padding: 12px 16px; border-radius: 0 10px 10px 0; font-family: var(--pb-display); font-weight: 600; color: var(--pb-ink); font-size: 16px; }
+/* managed settings */
+.dep-ms { padding: 28px; border-top: 1px solid var(--pb-line); }
+.dep-ms h4 { font-size: 20px; }
+.dep-ms > p { margin-top: 6px; max-width: 46em; }
+.dep-l1 { margin-top: 20px; border: 3px solid var(--pb-gate); border-radius: 20px; padding: 18px; background: #fffbeb; }
+.dep-l1 > .t { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.dep-l1 > .t b { font-family: var(--pb-display); color: var(--pb-ink); }
+.dep-ctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.dep-ctl div { background: #fff; border-radius: 10px; padding: 10px 12px; font-size: 14px; line-height: 1.4; border: 1px solid #fde68a; }
+.dep-ctl b { display: block; font-family: var(--pb-display); font-size: 13.5px; color: var(--pb-ink); margin-bottom: 2px; }
+.dep-l2 { margin-top: 16px; border: 3px solid var(--pb-file); border-radius: 16px; padding: 14px 16px; background: #eef2ff; }
+.dep-l2 .t { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dep-l2 p { font-size: 14px; margin-top: 8px; }
+.dep-l3 { margin-top: 12px; border: 3px solid var(--pb-agent); border-radius: 12px; padding: 12px 14px; background: #f0fdfa; font-family: var(--pb-display); font-weight: 700; color: var(--pb-ink); font-size: 15px; }
+.dep-l3 span { font-family: var(--pb-text); font-weight: 400; font-size: 14px; color: var(--pb-body); }
+.dep-ms .note { margin-top: 14px; font-size: 14px; color: var(--pb-muted); }
+/* CI/CD */
+.dep-stairs { align-items: end; --n: 5; }
+.dep-stairs .dep-st { min-height: calc(70px + var(--h, 0) * 22px); }
+.dep-stairs .dep-st:not(:last-child)::after { display: none; }
+.dep-pane { display: none; margin-top: 16px; background: #fff; border: 1px solid var(--pb-line); border-radius: 14px; padding: 18px 20px; }
+.dep-pane.on { display: block; animation: pb-fade .4s var(--pb-ease); }
+.dep-pane h5 { margin: 0 0 6px; font-family: var(--pb-display); font-size: 17px; color: var(--pb-ink); }
+.dep-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.dep-flow > span.a { color: var(--pb-agent); font-weight: 800; }
+.dep-flow > * { animation: pb-pop .45s var(--pb-ease) both; }
+.dep-flow > *:nth-child(2) { animation-delay: .1s; } .dep-flow > *:nth-child(3) { animation-delay: .2s; } .dep-flow > *:nth-child(4) { animation-delay: .3s; } .dep-flow > *:nth-child(5) { animation-delay: .4s; } .dep-flow > *:nth-child(6) { animation-delay: .5s; } .dep-flow > *:nth-child(7) { animation-delay: .6s; } .dep-flow > *:nth-child(8) { animation-delay: .7s; } .dep-flow > *:nth-child(9) { animation-delay: .8s; }
+.dep-tbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+.dep-tbl th { text-align: left; font-family: var(--pb-display); font-size: 12px; letter-spacing: .8px; text-transform: uppercase; color: var(--pb-muted); padding: 6px 10px; border-bottom: 2px solid var(--pb-line); }
+.dep-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--pb-line); vertical-align: top; }
+.dep-tbl tr { animation: pb-fade .4s var(--pb-ease) both; }
+.dep-tbl tr:nth-child(2) { animation-delay: .1s; } .dep-tbl tr:nth-child(3) { animation-delay: .2s; } .dep-tbl tr:nth-child(4) { animation-delay: .3s; }
+.dep-hand { display: grid; grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr); align-items: stretch; }
+.dep-hand + .dep-hand { margin-top: 24px; }
+.dep-hand > div { border-radius: 16px; padding: 22px; background: #fff; box-shadow: var(--pb-shadow); display: flex; flex-direction: column; gap: 10px; }
+.dep-hand .go { background: none; box-shadow: none; padding: 0; display: grid; place-items: center; }
+.dep-hand .go svg { width: 70px; height: 28px; }
+.dep-hand .go path { stroke: var(--pb-agent); stroke-width: 3; fill: none; stroke-dasharray: 10 8; animation: pb-flow 2.4s linear infinite; }
+.dep-hand h3 { font-size: 18px; }
+.dep-note { margin-top: 14px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .dep-hand .go path { animation: none; } }
+@media (max-width: 960px) {
+  .dep-track { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dep-st:not(:last-child)::after { display: none; }
+  .dep-gate { grid-template-columns: 1fr; gap: 6px; }
+  .dep-arr { transform: rotate(90deg); height: 28px; }
+  .dep-ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dep-stairs { align-items: stretch; }
+  .dep-stairs .dep-st { min-height: 0; }
+}
+@media (max-width: 640px) {
+  .dep-pick, .dep-track, .dep-ctl { grid-template-columns: 1fr; }
+  .dep-st { min-height: 0; }
+  .dep-demo, .dep-ms { padding: 22px 16px 26px; }
+  .dep-hand { grid-template-columns: 1fr; gap: 8px; }
+  .dep-hand .go { transform: rotate(90deg); height: 40px; }
+  .dep-fr { grid-template-columns: 1fr; }
+  .dep-fr .iss { grid-column: 1; }
+  .dep-tbl { display: block; overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 5: Deploy</h1>
+        <p class="lead">AI in the PR review loop, hooks as approval gates, and CI/CD with tiered autonomy.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section" style="padding-bottom:0">
+    <div class="pb-wrap">
+      <nav class="dep-pick" aria-label="The three Deploy plays">
+        <a href="#play-review"><i>1</i><span><b>AI in the PR review loop</b><small>Layered review, humans kept where it counts</small></span></a>
+        <a href="#play-hooks"><i>2</i><span><b>Hooks as approval gates</b><small>The agent cannot pass the production gate</small></span></a>
+        <a href="#play-cicd"><i>3</i><span><b>CI/CD integration and deployment</b><small>Autonomy tiered by environment</small></span></a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head">
+        <span class="pb-kicker">The shift</span>
+        <h2>From reading every line to governing as the agent acts</h2>
+        <p class="pb-lede">Review used to depend on how many people were free to read. Now every PR gets the same review passes, and approvals are enforced in the moment.</p>
+      </div>
+      <div class="pb-shift pb-reveal">
+        <div class="old">
+          <span class="pb-chip old">Traditional</span>
+          <h3 style="margin-top:10px">Humans review every line</h3>
+          <p>Governance lives in review cycles, often applied inconsistently. A PR waits for a reviewer to read all of it.</p>
+          <div class="dep-lanes"><div class="dep-lane"><small>One PR</small><div class="tr"><span>Waits for a reviewer</span><span>Read in full</span><span>Quality varies with load</span></div></div></div>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div class="new">
+          <span class="pb-chip agent">AI-native</span>
+          <h3 style="margin-top:10px">Layers of agentic review</h3>
+          <p>Human review is reserved for regulated and critical code. Governance is enforced as the AI acts, with hooks as approval gates.</p>
+          <div class="dep-lanes"><div class="dep-lane ai"><small>One PR</small><div class="tr"><span>Bugs</span><span>Security</span><span>Compliance</span><span class="h">Human threshold</span></div></div></div>
+        </div>
+      </div>
+      <div class="pb-legend" aria-label="Legend">
+        <span class="pb-chip agent">Claude or an agent does the work</span>
+        <span class="pb-chip human">A person decides or approves</span>
+        <span class="pb-chip gate">A gate, check or hook</span>
+        <span class="pb-file">committed file</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+
+      <!-- PLAY 1 -->
+      <div class="pb-play pb-reveal" id="play-review" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">1</div>
+          <div>
+            <h3>AI in the PR review loop</h3>
+            <p>Claude both gives and receives reviews. Engineers focus on behavior: judging intent and risk.</p>
+          </div>
+        </div>
+        <div role="tablist" aria-label="PR review: five parts">
+          <button role="tab" id="r-t1" aria-controls="r-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="r-t2" aria-controls="r-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="r-t3" aria-controls="r-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="r-t4" aria-controls="r-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="r-t5" aria-controls="r-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="r-p1" aria-labelledby="r-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><p>Review capacity is planned around human output. A PR waits for a reviewer to read all of it, quality varies with reviewer load, and the author chases while the backlog grows.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><p>All PRs get an identical set of review passes, with findings ranked by severity. Human attention moves up a level: does the change do what the plan intended, and is the risk acceptable?</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="r-p2" aria-labelledby="r-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3>
+              <ul style="margin:0;padding-left:18px"><li>An updated <span class="pb-file">CLAUDE.md</span> from Stage 3.</li><li>Skills, if review passes should enforce written policies.</li><li>Defined subagents.</li></ul></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul style="margin:0;padding-left:18px"><li>A repo with the Claude integration installed: the managed Code Review service (enabled by an Owner of the Claude organization), or <code>claude-code-action</code> in your own CI.</li><li>Where needed, model calls through Amazon Bedrock, Google Cloud's Vertex AI, or Microsoft Foundry.</li><li>Branch protection that requires a code owner's approval is worthwhile.</li></ul></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="r-p3" aria-labelledby="r-t3" hidden>
+          <ol class="pb-list">
+            <li><span>Start with the managed Code Review service. Use <code>claude-code-action</code> in your own CI when you need pipeline control or want calls routed through your own cloud agreement.</span></li>
+            <li><span><span class="pb-chip human">Tech lead</span> writes the review policy as <span class="pb-file">REVIEW.md</span> at the repo root, split into passes: bugs and logical errors, security and vulnerabilities, and compliance against <span class="pb-file">spec.md</span>, <span class="pb-file">plan.md</span> and design principles. It also says what counts as Important versus a Nit, and what to skip.</span></li>
+            <li><span><span class="pb-chip human">Tech lead</span> sets the human threshold. Findings do not approve or block a PR on their own. Branch protection still requires a code owner's approval. A platform engineer who wants to gate merges on findings can read the severity counts the check run publishes.</span></li>
+            <li><span>When a reviewer or author tags <code>@claude</code> on a comment, Claude addresses it and pushes the fix. For PRs Claude opened, let it "babysit" the PR with a custom slash command that sweeps unresolved comments and failing checks until the PR is green and waiting only on the code owner.</span></li>
+            <li><span>Feed findings back into <span class="pb-file">CLAUDE.md</span>. When a review flags the same mistake twice, the correction goes into <span class="pb-file">CLAUDE.md</span> in that review.</span></li>
+            <li><span>Monthly, the tech lead tunes the setup: rate the findings and cap Nit volume in <span class="pb-file">REVIEW.md</span>. Exclude generated paths and anything CI already enforces.</span></li>
+          </ol>
+        </div>
+        <div role="tabpanel" id="r-p4" aria-labelledby="r-t4" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card gate"><h3>Separation of duties</h3><p>The agent that wrote the code has no way to approve it.</p></div>
+            <div class="pb-card file"><h3>One policy for every PR</h3><p><span class="pb-file">REVIEW.md</span> applies to all PRs.</p></div>
+            <div class="pb-card"><h3>Where it is logged</h3><p>Findings, fixes, ratings and approvals sit in PR history. The PR is the audit record.</p></div>
+            <div class="pb-card human"><h3>Who approves</h3><p>A human, through branch protection, informed by the findings. Code owners approve every PR.</p></div>
+          </div>
+          <p class="dep-note">Open question from the course: which code is "regulated and critical", and so still reviewed by hand, is not defined precisely. The tech lead sets that threshold for your organization.</p>
+        </div>
+        <div role="tabpanel" id="r-p5" aria-labelledby="r-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>Time to first review, which should fall to minutes. Share of review comments resolved without a human touching the branch.</div>
+            <div><b>Lagging</b>Defects and vulnerabilities caught before merge versus those that escape to production (from PR history and the incident tracker).</div>
+          </div>
+        </div>
+
+        <div class="dep-demo" data-pb-steps id="demo-review">
+          <h4>Watch a PR move through review</h4>
+          <p>The insurer status panel PR. Click a stage, or use Play.</p>
+          <ol class="dep-track" style="--n:6">
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="0"><b>1</b>PR opened</button><small>Policy: <span class="pb-file">REVIEW.md</span></small><span class="pb-chip agent dep-tok">PR</span></li>
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="1"><b>2</b>Bugs pass</button><small>Logic, edge cases, regressions</small><span class="pb-chip agent dep-tok">PR</span></li>
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="2"><b>3</b>Security pass</button><small>Injection, auth, PII in logs</small><span class="pb-chip agent dep-tok">PR</span></li>
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="3"><b>4</b>Compliance pass</button><small>Matches spec and plan</small><span class="pb-chip agent dep-tok">PR</span></li>
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="4"><b>5</b>Ranked findings</button><small>Nits capped at 5</small><span class="pb-chip agent dep-tok">PR</span></li>
+            <li class="dep-st pb-step"><button class="dep-sb" data-pb-goto="5"><b>6</b>Human decides</button><small>Code owner approves</small><span class="pb-chip human dep-tok">PR</span></li>
+          </ol>
+          <div class="dep-cap" id="rv-cap" aria-live="polite"></div>
+          <div class="dep-find" aria-label="Findings">
+            <div class="dep-fr" id="rv-f1"><span class="sev nit">Nit</span><code>claims-api/tests/test_status.py:8</code><span class="iss">Bugs: no test covers a <code style="color:inherit">paid</code> claim with no expected date.</span></div>
+            <div class="dep-fr" id="rv-f2"><span class="sev">Important</span><code>claims-api/routes/status.py:31</code><span class="iss">Security: the error path logs the whole claims-core response, which includes the policy holder's name.</span></div>
+            <div class="dep-fr" id="rv-f3"><span class="sev">Important</span><code>portal/src/claims/StatusPanel.tsx:22</code><span class="iss">Compliance: the panel fetches on every render, but <span class="pb-file">plan.md</span> says it must cache. Only the compliance pass finds this, because it reads the committed plan.</span></div>
+          </div>
+          <div class="dep-sum" id="rv-sum"><span class="pb-chip gate">Check run</span><span>Important first, then Nits. At most five Nits, the rest as a count.</span></div>
+          <div class="pb-steps-ui">
+            <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+            <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAY 2 -->
+      <div class="pb-play pb-reveal" id="play-hooks" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">2</div>
+          <div>
+            <h3>Hooks as approval gates</h3>
+            <p>A hook is a script that runs before Claude acts. It can allow, ask or block. The release gate is the clearest case.</p>
+          </div>
+        </div>
+        <div role="tablist" aria-label="Approval gates: five parts">
+          <button role="tab" id="h-t1" aria-controls="h-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="h-t2" aria-controls="h-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="h-t3" aria-controls="h-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="h-t4" aria-controls="h-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="h-t5" aria-controls="h-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="h-p1" aria-labelledby="h-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><p>Governance lives in review cycles, applied by people, often inconsistently.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><p>Governance is enforced as the AI acts. In Stage 3, hooks allowed or blocked with no human. A hook can also <b>ask</b>, pausing until the person running the session confirms. When the approver is someone else, such as a release manager, the hook looks for their recorded approval and blocks until it exists.</p></div>
+          </div>
+          <p class="dep-note">Hooks run wherever Claude acts. They can block edits to migrations and infra without a change ticket (Stage 3), and stop the agent editing test files during a fix (Stage 4).</p>
+        </div>
+        <div role="tabpanel" id="h-p2" aria-labelledby="h-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3><p>None.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3><p>A written list of the approvals your change process requires.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="h-p3" aria-labelledby="h-t3" hidden>
+          <ol class="pb-list">
+            <li><span><span class="pb-chip human">Engineering leadership</span>, with change management and compliance, lists the human approval gates that must survive: change management sign-off, release authorization, edits to protected paths.</span></li>
+            <li><span><span class="pb-chip human">Platform engineer</span> expresses each gate as a hook, a script that runs before Claude acts and can allow, ask or block.</span></li>
+            <li><span>Team hooks go in <span class="pb-file">.claude/settings.json</span> in Git. Non-negotiable hooks go in managed settings, owned by the platform or IT admin, where engineers cannot switch them off.</span></li>
+            <li><span>A block must explain itself. The reason and the route to approval appear in Claude's output.</span></li>
+          </ol>
+        </div>
+        <div role="tabpanel" id="h-p4" aria-labelledby="h-t4" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card gate"><h3>What is enforced</h3><p>"Hooks are the approval gates." The condition is checked every time, for everyone.</p></div>
+            <div class="pb-card"><h3>Where it is logged</h3><p>Allow and block decisions are logged with a timestamp.</p></div>
+            <div class="pb-card human"><h3>Who approves</h3><p>The gate defines what counts as approval: an approved change ticket, or the release manager's sign-off.</p></div>
+            <div class="pb-card"><h3>What it relies on</h3><p>The agent has no way to write to the records the gate reads.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="h-p5" aria-labelledby="h-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>Time spent waiting on each approval gate. The OpenTelemetry export records every hook decision with a timestamp and an allow or block verdict.</div>
+            <div><b>Lagging</b>Gate violations that reach production, before and after hooks (from the incident tracker).</div>
+          </div>
+        </div>
+
+        <div class="dep-demo" data-pb-steps id="demo-hooks">
+          <h4>Watch a release meet the gate</h4>
+          <p>The insurer portal ships to dev, staging and production. Each environment has its own deploy tools, and a hook checks every release call.</p>
+          <div class="dep-gate">
+            <div class="dep-box"><span class="pb-chip agent">Agent</span><h5 id="hk-act">Calls release</h5><p id="hk-actp">Release to dev.</p></div>
+            <div class="dep-arr" aria-hidden="true">&rarr;</div>
+            <div class="dep-box gate"><span class="pb-chip gate">Release hook</span><div class="dep-verdict" id="hk-v">ALLOW</div><p id="hk-msg"></p></div>
+            <div class="dep-arr" aria-hidden="true">&rarr;</div>
+            <div class="dep-box tgt" id="hk-tgt"><h5 id="hk-env">Dev</h5><p id="hk-st">Released.</p></div>
+          </div>
+          <div class="dep-people" aria-label="Who is involved">
+            <span class="pb-file" id="hk-ticket">change ticket</span>
+            <span class="pb-chip human" id="hk-rm">Release manager approves</span>
+          </div>
+          <ol class="pb-list" style="margin-top:18px">
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="0">Dev: the hook allows.</button></span></li>
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="1">Staging: allowed from the pipeline on main, otherwise it asks a person.</button></span></li>
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="2">Production: no approved change ticket, so the hook denies.</button></span></li>
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="3">The agent follows the route in the message and opens a change ticket.</button></span></li>
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="4">A named release manager approves the ticket.</button></span></li>
+            <li class="pb-step"><span><button class="dep-sb" data-pb-goto="5">The agent calls release again. The hook finds the approval and allows.</button></span></li>
+          </ol>
+          <div class="dep-callout">The agent may act up to the production gate and cannot pass it.</div>
+          <div class="pb-steps-ui">
+            <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+            <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div class="dep-ms">
+          <h4>Managed settings for a regulated enterprise</h4>
+          <p>The platform team deploys these through device management or the admin console. Engineers cannot edit or override them. The course calls this a starting point to customize.</p>
+          <div class="dep-l1 pb-reveal">
+            <div class="t"><span class="pb-chip gate">Outer layer</span><b>Managed settings</b><span>owned by the platform team or IT admin</span></div>
+            <div class="dep-ctl">
+              <div><b>Secrets and network</b>Keep secret files out of Claude's context. Block network access through tools. Pre-approve a safe inner loop (git, build, test, lint) so people are not worn down by prompts.</div>
+              <div><b>Nobody widens the rules</b>The bypass mode is off, and only managed permission rules apply.</div>
+              <div><b>Sandbox</b>The operating system enforces limits on commands and network domains. If the sandbox cannot start, Claude Code refuses to start.</div>
+              <div><b>Credentials</b>No reads of SSH keys or cloud credentials. Listed tokens are stripped from sandboxed commands.</div>
+              <div><b>Managed hooks only</b>Only managed hooks run. Put the approval gate in the managed file.</div>
+              <div><b>Approved marketplace</b>Skills, agents, hooks and MCP servers come only from the organization's approved plugin marketplace.</div>
+              <div><b>Tool allowlist</b>The agent's tools are an allowlist owned by the platform team.</div>
+              <div><b>Version floor</b>Claude Code refuses to start below the approved version.</div>
+              <div><b>Trade-off</b>Each deny rule removes some capability. Balance it against the repo's data classification.</div>
+            </div>
+            <div class="dep-l2 pb-reveal d1">
+              <div class="t"><span class="pb-chip gate">Middle layer</span><b>Project settings in Git</b><span class="pb-file">.claude/settings.json</span></div>
+              <p>Team hooks live here. With "managed hooks only" switched on, project hooks do not run, so the approval gate goes in the outer layer.</p>
+              <div class="dep-l3 pb-reveal d2">Inner layer: Claude's session. <span>It works inside every layer around it and cannot switch any of them off.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAY 3 -->
+      <div class="pb-play pb-reveal" id="play-cicd" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">3</div>
+          <div>
+            <h3>CI/CD integration and deployment</h3>
+            <p>Run Claude Code non-interactively in the pipeline, sandbox it, expose deployment through MCP, and "rehearse the rollback paths before the agent ever needs them".</p>
+          </div>
+        </div>
+        <div role="tablist" aria-label="CI/CD: five parts">
+          <button role="tab" id="c-t1" aria-controls="c-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="c-t2" aria-controls="c-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="c-t3" aria-controls="c-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="c-t4" aria-controls="c-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="c-t5" aria-controls="c-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="c-p1" aria-labelledby="c-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><p>Pipelines run deterministic scripts. Anything that needs judgment waits for a human: triaging a flaky test, writing the changelog, diagnosing a broken build. Deployment and rollback are runbooks followed under pressure.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><p>Claude runs non-interactively in the pipeline for judgment steps, in a sandbox with scoped credentials. Deployment tooling is exposed through MCP, so the workflow that wrote and tested the change can also ship and roll it back, inside gates the organization defines per environment.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="c-p2" aria-labelledby="c-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3><p>AI in the PR review loop and hooks as approval gates. The gates must exist before automation speeds anything through them.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul style="margin:0;padding-left:18px"><li>A CI platform with <code>claude-code-action</code>, or any runner that can call <code>claude -p</code>.</li><li>Model access through the API, Bedrock, Foundry or Vertex where traffic must stay on your cloud agreement.</li><li>MCP servers for the deployment targets.</li><li>A sandbox profile for agent jobs, with no standing production credentials.</li></ul></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="c-p3" aria-labelledby="c-t3" hidden>
+          <p style="margin-bottom:12px"><span class="pb-chip human">Platform engineer</span> adds capability in this order. The animation below walks through it.</p>
+          <ol class="pb-list">
+            <li><span>Start with read-only judgment steps through <code>claude -p</code>: triage a failed build, summarize a flaky test, draft the changelog.</span></li>
+            <li><span>Add write steps behind existing gates: fix lint, update generated docs, address review comments through <code>@claude</code>. Everything the agent writes arrives as a PR through branch protection. The agent has no route to push to main.</span></li>
+            <li><span>Sandbox execution: containers under a network policy, short-lived scoped tokens, no production credentials by default.</span></li>
+            <li><span>Expose deployment through MCP. Deploy, status and rollback become tools scoped per environment, an allowlist instead of a shell script with credentials.</span></li>
+            <li><span>Tier autonomy by environment. Dev deploys freely. In production the agent prepares the release and the release manager authorizes it, enforced by a hook. Staging sits in the middle.</span></li>
+            <li><span>Make rollback the most rehearsed path in the pipeline: a single command the agent can run, exercised regularly in staging. The Stage 6 loop calls it when a band is breached.</span></li>
+          </ol>
+        </div>
+        <div role="tabpanel" id="c-p4" aria-labelledby="c-t4" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card gate"><h3>The rule</h3><p>"The agent may act up to the production gate and cannot pass it."</p></div>
+            <div class="pb-card"><h3>Branch protection</h3><p>Everything the agent writes becomes a PR.</p></div>
+            <div class="pb-card human"><h3>Production deploy hook</h3><p>Blocks release until a named release manager authorizes it. Each non-interactive run acts under the agent's own identity, so logs separate agent actions from the triggering engineer's.</p></div>
+            <div class="pb-card"><h3>Permission tiers</h3><p>One set per environment. If managed settings allow only managed hooks or servers, the gate and the servers must be in the managed files.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="c-p5" aria-labelledby="c-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>Share of pipeline failures triaged without paging a human (from CI/CD logs).</div>
+            <div><b>Lagging</b>DORA (DevOps Research and Assessment) measures, already emitted by CI and deployment tooling.</div>
+          </div>
+        </div>
+
+        <div class="dep-demo" data-pb-steps id="demo-cicd">
+          <h4>Watch autonomy grow in order</h4>
+          <p>Each step stands on the one before it. Click a step, or use Play.</p>
+          <ol class="dep-track dep-stairs">
+            <li class="dep-st pb-step" style="--h:0"><button class="dep-sb" data-pb-goto="0"><b>1</b>Read-only judgment</button></li>
+            <li class="dep-st pb-step" style="--h:1"><button class="dep-sb" data-pb-goto="1"><b>2</b>Write steps behind gates</button></li>
+            <li class="dep-st pb-step" style="--h:2"><button class="dep-sb" data-pb-goto="2"><b>3</b>Deploy through MCP</button></li>
+            <li class="dep-st pb-step" style="--h:3"><button class="dep-sb" data-pb-goto="3"><b>4</b>Tiered by environment</button></li>
+            <li class="dep-st pb-step" style="--h:4"><button class="dep-sb" data-pb-goto="4"><b>5</b>Rehearsed rollback</button></li>
+          </ol>
+          <div class="dep-pane" data-p="0">
+            <h5>Read-only judgment steps</h5>
+            <p>A step that runs only if the build failed. Claude reads the log, names the likely cause, says whether it looks flaky or real, and writes a three-line summary for the PR thread. It cannot change anything.</p>
+            <div class="dep-flow"><span class="pb-chip gate">Build fails</span><span class="a">&rarr;</span><span class="pb-chip agent">Claude reads the log</span><span class="a">&rarr;</span><span class="pb-chip agent">Flaky or real?</span><span class="a">&rarr;</span><span class="pb-chip agent">Summary on the PR</span></div>
+          </div>
+          <div class="dep-pane" data-p="1">
+            <h5>Write steps behind existing gates</h5>
+            <p>Fix lint, update generated docs, address review comments. Everything the agent writes arrives as a PR. The agent has no route to push to main.</p>
+            <div class="dep-flow"><span class="pb-chip agent">Claude writes a fix</span><span class="a">&rarr;</span><span class="pb-chip agent">Opens a PR</span><span class="a">&rarr;</span><span class="pb-chip gate">Branch protection</span><span class="a">&rarr;</span><span class="pb-chip human">Code owner approves</span><span class="a">&rarr;</span><span class="pb-chip old">Main</span></div>
+          </div>
+          <div class="dep-pane" data-p="2">
+            <h5>Deployment through MCP</h5>
+            <p>Agent jobs run in a sandbox with short-lived scoped tokens and no standing production credentials. There is one MCP server per environment, because an allow rule names the server and tool, not the arguments. That is how an allowlist tells staging from production.</p>
+            <table class="dep-tbl"><thead><tr><th>Tool</th><th>Input</th><th>Returns</th></tr></thead><tbody>
+              <tr><td><code>release</code></td><td>The version. In production, also a ticket.</td><td>The release ID once the rollout finishes.</td></tr>
+              <tr><td><code>status</code></td><td>None.</td><td>Waits until five minutes after the last release, then reports each endpoint's 5xx rate.</td></tr>
+              <tr><td><code>rollback</code></td><td>None.</td><td>The version that is live again.</td></tr>
+            </tbody></table>
+          </div>
+          <div class="dep-pane" data-p="3">
+            <h5>Autonomy tiered by environment</h5>
+            <table class="dep-tbl"><thead><tr><th>Environment</th><th>On the allowlist</th><th>What happens to release</th><th>Who approves</th></tr></thead><tbody>
+              <tr><td><b>Dev</b></td><td>release, status, rollback</td><td>The hook allows.</td><td>Nobody.</td></tr>
+              <tr><td><b>Staging</b></td><td>release, status, rollback</td><td>The hook asks, or allows from the pipeline on main.</td><td>The engineer, or the approved merge.</td></tr>
+              <tr><td><b>Production</b></td><td>status, rollback</td><td>Denied unless the hook allows.</td><td>Release manager, through a change ticket.</td></tr>
+            </tbody></table>
+            <p class="dep-note">In production, release is off the allowlist, so the hook's allow is the only way through. Production fails closed: if the hook fails to run, the release is denied. Rollback stays allowed because it is a runbook approved in advance.</p>
+          </div>
+          <div class="dep-pane" data-p="4">
+            <h5>Rollback is the most rehearsed path</h5>
+            <p>One command the agent can run, exercised regularly in staging. In the example staging job, the agent releases the commit, checks status, and rolls back if any endpoint's 5xx rate is over 1%. The Stage 6 loop calls the same command when a control band is breached.</p>
+            <div class="dep-flow"><span class="pb-chip agent">release</span><span class="a">&rarr;</span><span class="pb-chip agent">status (5 minutes after)</span><span class="a">&rarr;</span><span class="pb-chip gate">5xx over 1%?</span><span class="a">&rarr;</span><span class="pb-chip agent">rollback</span><span class="a">&rarr;</span><span class="pb-chip agent">Previous version live</span></div>
+          </div>
+          <div class="pb-steps-ui">
+            <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+            <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head">
+        <span class="pb-kicker">Hand-offs</span>
+        <h2>What Deploy hands on</h2>
+      </div>
+      <div class="pb-reveal">
+        <div class="dep-hand">
+          <div>
+            <span class="pb-chip agent">Artifact</span>
+            <h3>A merged PR</h3>
+            <p>It passed the review passes and carries a code owner's approval. PR history is the audit record.</p>
+            <p><span class="pb-file">merged PR</span></p>
+          </div>
+          <div class="go" aria-hidden="true"><svg viewBox="0 0 70 28"><path d="M2 14 H62 M54 6 L64 14 L54 22"/></svg></div>
+          <div>
+            <span class="pb-chip gate">Trigger</span>
+            <h3>The pipeline runs</h3>
+            <p>A merge to main starts CI/CD. Staging is allowed from the pipeline on main, because the approved merge is the approval. Production waits at the gate.</p>
+          </div>
+        </div>
+        <div class="dep-hand">
+          <div>
+            <span class="pb-chip agent">Artifact</span>
+            <h3>A release in production</h3>
+            <p>It reached production through the gate, with a rehearsed rollback ready and every gate decision logged.</p>
+            <p><span class="pb-file">release + rollback</span></p>
+          </div>
+          <div class="go" aria-hidden="true"><svg viewBox="0 0 70 28"><path d="M2 14 H62 M54 6 L64 14 L54 22"/></svg></div>
+          <div>
+            <span class="pb-chip gate">Trigger</span>
+            <h3>Agents watch the live release</h3>
+            <p>Production hands over to <a href="{{BP}}/maintain/">Stage 6: Maintain</a>. When a control band is breached, that loop can call rollback.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-takeaways pb-reveal">
+        <h3>Key takeaways</h3>
+        <ul>
+          <li>Every PR gets the same review passes, written once in <span class="pb-file">REVIEW.md</span>. Humans spend their time on intent and risk.</li>
+          <li>Findings do not approve or block on their own. A code owner still approves, and the tech lead sets the human threshold.</li>
+          <li>Approval gates are hooks. The agent may act up to the production gate and cannot pass it.</li>
+          <li>Grow autonomy in order: read-only steps, write steps behind gates, deployment through MCP, then tiers by environment.</li>
+          <li>Rehearse rollback in staging before the agent ever needs it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+
+  /* PR review */
+  var rv = $('demo-review'), cap = $('rv-cap');
+  var caps = [
+    '<span class="pb-chip human">Tech lead</span> wrote <span class="pb-file">REVIEW.md</span> at the repo root. It sets three passes, what counts as Important, and what to skip. Every PR gets the same treatment.',
+    '<span class="pb-chip agent">Bugs pass</span> looks for logic errors, broken edge cases and subtle regressions. It finds a gap in test coverage.',
+    '<span class="pb-chip agent">Security pass</span> looks for injection risks, authentication gaps and personal data in logs. It finds one.',
+    '<span class="pb-chip agent">Compliance pass</span> checks the change against <span class="pb-file">spec.md</span>, <span class="pb-file">plan.md</span> and design principles. It finds one more.',
+    'Findings are ranked by severity, each tagged with its pass. Nits are capped at five, with the rest as a count. Tag <code>@claude</code> on a comment and Claude pushes the fix.',
+    '<span class="pb-chip human">Code owner</span> approves through branch protection, informed by the findings. The agent that wrote the code cannot approve it. Regulated and critical code gets a full human read, at a threshold the tech lead sets.'
+  ];
+  rv.addEventListener('pb:step', function (e) {
+    var i = e.detail;
+    cap.innerHTML = caps[i];
+    $('rv-f1').classList.toggle('show', i >= 1);
+    $('rv-f2').classList.toggle('show', i >= 2);
+    $('rv-f3').classList.toggle('show', i >= 3);
+    $('rv-sum').classList.toggle('show', i >= 4);
+  });
+
+  /* Hook gate */
+  var hk = $('demo-hooks');
+  var S = [
+    { act: 'Calls release', actp: 'Ships the version to dev.', v: 'ALLOW', c: 'allow', m: 'Dev: the hook allows.', env: 'Dev', st: 'Released.', t: 'ok', tk: '', rm: '' },
+    { act: 'Calls release', actp: 'Ships the version to staging.', v: 'ALLOW or ASK', c: 'ask', m: 'From the pipeline on main, the approved merge is the approval, so it allows. Otherwise it asks the person: "approve only if you own this release".', env: 'Staging', st: 'Released when allowed.', t: 'ok', tk: '', rm: '' },
+    { act: 'Calls release', actp: 'Ships the version to production.', v: 'DENY', c: 'deny', m: 'No approved change ticket for this version. Open a change ticket, wait for the release manager\'s approval, then call release again with the ticket number.', env: 'Production', st: 'Held at the gate.', t: 'held', tk: '', rm: '' },
+    { act: 'Opens a change ticket', actp: 'Then waits. It cannot approve its own ticket.', v: 'WAITING', c: 'wait', m: 'The hook looks in the change system for an approved ticket. There is none yet.', env: 'Production', st: 'Held at the gate.', t: 'held', tk: 'lit', rm: '' },
+    { act: 'Waits', actp: 'The release manager reviews the ticket.', v: 'WAITING', c: 'wait', m: 'The approval is recorded in the change system. The agent has no way to write there.', env: 'Production', st: 'Held at the gate.', t: 'held', tk: 'lit', rm: 'lit' },
+    { act: 'Calls release again', actp: 'This time with the ticket number.', v: 'ALLOW', c: 'allow', m: 'Ticket approved by the release manager. The decision is logged with a timestamp.', env: 'Production', st: 'Released.', t: 'ok', tk: 'lit', rm: 'lit' }
+  ];
+  hk.addEventListener('pb:step', function (e) {
+    var s = S[e.detail];
+    $('hk-act').textContent = s.act; $('hk-actp').textContent = s.actp;
+    var v = $('hk-v'); v.textContent = s.v; v.className = 'dep-verdict ' + s.c;
+    $('hk-msg').textContent = s.m;
+    $('hk-env').textContent = s.env; $('hk-st').textContent = s.st;
+    $('hk-tgt').className = 'dep-box tgt ' + s.t;
+    $('hk-ticket').className = 'pb-file ' + s.tk; $('hk-rm').className = 'pb-chip human ' + s.rm;
+  });
+
+  /* CI/CD */
+  var cd = $('demo-cicd');
+  var panes = [].slice.call(cd.querySelectorAll('.dep-pane'));
+  cd.addEventListener('pb:step', function (e) {
+    panes.forEach(function (p) { p.classList.toggle('on', +p.getAttribute('data-p') === e.detail); });
+  });
+})();
+</script>
+</body>
+</html>

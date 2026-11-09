@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 2: Design | Bitovi</title>
+<meta name="description" content="Turn intent into a spec in one working session, with your standards applied as skills.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+.design-split { display: grid; gap: 10px; }
+.design-split .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.design-box { background: #fff; border: 1px dashed var(--pb-old); border-radius: 10px; padding: 8px 12px; font-family: var(--pb-display); font-weight: 600; font-size: 14px; color: var(--pb-body); }
+.design-arr { color: var(--pb-agent); font-weight: 800; }
+.design-arr.old { color: var(--pb-old); }
+
+/* inputs flowing into one session */
+.design-flow { display: grid; grid-template-columns: minmax(0, 1fr) 100px minmax(0, 1.1fr) 56px minmax(0, 1fr); align-items: center; }
+.design-ins { display: grid; gap: 10px; justify-items: start; }
+.design-ins .pb-chip, .design-ins .pb-file { box-shadow: var(--pb-shadow); background-clip: padding-box; }
+.design-ins .grp { font-size: 13px; color: var(--pb-muted); font-family: var(--pb-display); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.design-wires { width: 100%; height: 250px; display: block; }
+.design-wires path { vector-effect: non-scaling-stroke; fill: none; stroke: var(--pb-agent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s var(--pb-ease); }
+.design-flow.in .design-wires path:nth-child(2) { transition-delay: .15s; }
+.design-flow.in .design-wires path:nth-child(3) { transition-delay: .3s; }
+.design-flow.in .design-wires path:nth-child(4) { transition-delay: .45s; }
+.design-flow.in .design-wires path:nth-child(5) { transition-delay: .6s; }
+.design-flow.in .design-wires path { stroke-dashoffset: 0; }
+.design-sess { background: var(--pb-ink); color: #e2e8f0; border-radius: 16px; padding: 20px; display: grid; gap: 8px; justify-items: start; }
+.design-sess h3 { color: #fff; font-size: 18px; }
+.design-sess p { font-size: 15px; }
+.design-out { display: grid; place-items: center; }
+.design-out svg { width: 40px; height: 24px; }
+.design-out path { fill: none; stroke: var(--pb-agent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .8s var(--pb-ease) .9s; }
+.design-flow.in .design-out path { stroke-dashoffset: 0; }
+.design-result { background: #fff; border: 1.5px solid var(--pb-file-bg); border-radius: 14px; padding: 16px; display: grid; gap: 8px; justify-items: start; box-shadow: var(--pb-shadow); font-size: 15px; }
+
+/* play card */
+.design-steps { padding: 22px 28px 26px; background: var(--pb-soft); border-bottom: 1px solid var(--pb-line); }
+.design-nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.design-nav button { font: inherit; text-align: left; border: 0; border-top: 4px solid var(--pb-line); border-radius: 0 0 10px 10px; background: #fff; padding: 8px 10px; cursor: pointer; font-size: 14px; line-height: 1.3; color: var(--pb-ink); font-family: var(--pb-display); font-weight: 600; }
+.design-nav button b { display: block; font-size: 12px; color: var(--pb-muted); }
+.design-nav button.on { border-top-color: var(--pb-red); box-shadow: var(--pb-shadow); }
+.design-nav button.done { border-top-color: var(--pb-agent); }
+.design-stage { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr); gap: 18px; margin-top: 18px; align-items: start; }
+.design-left { display: grid; gap: 12px; align-content: start; }
+.design-pane { background: #fff; border: 1px solid var(--pb-line); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: grid; gap: 8px; justify-items: start; opacity: 0; transform: translateY(10px); transition: opacity .45s, transform .45s var(--pb-ease); }
+.design-pane.show { opacity: 1; transform: none; }
+.design-pane:not(.show) { display: none; }
+.gone { display: none !important; }
+.design-pane .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.design-pane .pr { font-family: var(--pb-mono); font-size: 13px; color: var(--pb-body); line-height: 1.5; }
+.design-route { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; width: 100%; font-size: 14px; }
+.design-route i { font-style: normal; color: var(--pb-gate); font-weight: 800; }
+.design-route > span { display: flex; align-items: center; gap: 8px; }
+.design-route .rt { opacity: 0; transform: translateX(-14px); transition: opacity .5s, transform .6s var(--pb-ease); transition-delay: calc(var(--i, 0) * .25s); }
+.design-pane.show .rt { opacity: 1; transform: none; }
+.design-doc { background: #fff; border: 1.5px solid var(--pb-file-bg); border-radius: 12px; padding: 16px 18px; box-shadow: var(--pb-shadow); font-size: 14px; line-height: 1.5; }
+.design-doc .bar { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.design-skel { display: grid; gap: 8px; }
+.design-skel i { display: block; height: 10px; border-radius: 5px; background: var(--pb-line); }
+.design-skel i:nth-child(2) { width: 80%; } .design-skel i:nth-child(3) { width: 55%; }
+.design-sec { padding: 6px 8px; margin: 0 -8px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: opacity .45s, transform .45s var(--pb-ease), background .3s; transition-delay: calc(var(--i, 0) * .15s); }
+.design-sec.show { opacity: 1; transform: none; }
+.design-sec:not(.show) { display: none; }
+.design-sec b.h { display: block; font-family: var(--pb-display); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-file); }
+.design-sec ul { margin: 2px 0 0; padding-left: 0; list-style: none; display: grid; gap: 2px; }
+.design-sec li { display: flex; gap: 8px; }
+.design-sec li > em { font-style: normal; font-family: var(--pb-mono); font-weight: 700; color: var(--pb-file); flex: none; }
+.design-sec code { font-family: var(--pb-mono); font-size: 13px; }
+.design-ck { display: inline-block; width: 0; overflow: hidden; color: var(--pb-agent); font-weight: 800; transition: width .3s; white-space: nowrap; }
+.design-ck.show { width: 1.2em; }
+.design-sec.concerns li > em { color: var(--pb-gate); }
+.design-sec.concerns .own { margin-left: auto; flex: none; }
+.design-sec.concerns li { flex-wrap: nowrap; align-items: flex-start; }
+.design-sec.concerns li > span:not(.own) { flex: 1; }
+.design-sec.concerns .own { margin-left: 0; }
+[data-step="3"] .design-sec.concerns { background: var(--pb-gate-bg); transition-delay: 0s; }
+[data-step="2"] .design-sec.reqs { background: #f0fdfa; transition-delay: 0s; }
+.design-cap { margin-top: 16px; font-size: 16px; color: var(--pb-ink); min-height: 3.2em; }
+.design-cap .pb-chip { margin-right: 6px; }
+.design-pair { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border: 1.5px dashed var(--pb-file); border-radius: 12px; font-size: 14px; opacity: 0; transform: translateY(10px); transition: opacity .5s, transform .5s var(--pb-ease); }
+.design-pair.show { opacity: 1; transform: none; }
+.design-pair:not(.show) { display: none; }
+
+/* triggers */
+.design-rungs { display: grid; gap: 12px; }
+.design-rung { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: var(--pb-shadow); transform: translateX(-12px); transition: opacity .5s, transform .6s var(--pb-ease); }
+.design-rung.show { opacity: 1; transform: none; }
+.design-rung .n { width: 44px; height: 44px; border-radius: 50%; background: var(--pb-ink); color: #fff; font-family: var(--pb-display); font-weight: 800; display: grid; place-items: center; }
+.design-rung h3 { font-size: 18px; }
+.design-rung p { font-size: 15px; margin-top: 2px; }
+.design-chain { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.design-chain .design-arr { font-size: 18px; }
+
+/* measure */
+.design-line { display: grid; grid-template-columns: auto minmax(40px, 1fr) auto; gap: 10px; align-items: center; margin-bottom: 18px; font-size: 14px; }
+.design-line .rail { height: 4px; border-radius: 2px; background: var(--pb-agent); transform-origin: left; transform: scaleX(0); transition: transform 1.2s var(--pb-ease) .2s; }
+.design-line.in .rail { transform: none; }
+.design-line .dot { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* hand off */
+.design-hand-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); gap: 0; align-items: center; }
+.design-hand-row .col { background: var(--pb-navy-2); border-radius: 16px; padding: 22px; display: grid; gap: 10px; justify-items: start; }
+.design-hand-row .col p { color: #cbd5e1; font-size: 15px; }
+.design-hand-row svg { width: 100%; height: 60px; }
+.design-hand-row path.l { fill: none; stroke: #5eead4; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s var(--pb-ease) .2s; }
+.design-hand-row.in path.l { stroke-dashoffset: 0; }
+.design-hand-row path.h { fill: #5eead4; opacity: 0; transition: opacity .3s 1s; }
+.design-hand-row.in path.h { opacity: 1; }
+.design-hand-row .pb-btn { margin-top: 6px; }
+
+@media (max-width: 1000px) {
+  .design-stage { grid-template-columns: minmax(0, 1fr); }
+  .design-flow { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .design-wires { display: none; }
+  .design-out svg { transform: rotate(90deg); }
+}
+@media (max-width: 760px) {
+  .design-nav { grid-template-columns: repeat(6, minmax(36px, 1fr)); }
+  .design-nav button span { display: none; }
+  .design-steps { padding: 18px 14px 22px; }
+  .design-hand-row { grid-template-columns: 1fr; }
+  .design-hand-row svg { transform: rotate(90deg); height: 50px; }
+  .design-rung { grid-template-columns: 1fr; gap: 8px; }
+}
+.design-late:not(.show) { display: none; }
+.design-hand { font-size: 13px; color: var(--pb-muted); }
+.design-stage > *, .design-left, .design-doc, .design-pane { min-width: 0; }
+.design-pane .pb-chip { white-space: normal; }
+@media (max-width: 760px) {
+  .design-sec.concerns li { flex-wrap: wrap; }
+  .design-doc { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 2: Design</h1>
+        <p class="lead">Turn intent into a spec in one working session, with your standards applied as skills.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <!-- Shift -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The shift</span>
+        <h2>Two phases by two teams become one working session</h2>
+        <p class="pb-lede">The separation between requirements and design exists for accountability. It is also "slow and lossy". Here the two happen together, with your standards built in.</p>
+        <div class="pb-legend">
+          <span class="pb-chip human">A person decides</span>
+          <span class="pb-chip agent">Claude does the work</span>
+          <span class="pb-chip gate">A gate or control</span>
+          <span class="pb-file">spec.md</span>
+          <span class="pb-chip old">The traditional way</span>
+        </div>
+      </div>
+      <div class="pb-shift">
+        <div class="old pb-reveal">
+          <span class="pb-chip old">Traditional</span>
+          <h3 style="margin-top:10px">Written by analysts, parsed by designers</h3>
+          <div class="design-split">
+            <div class="row pb-reveal d1"><span class="design-box">Analysts formalize requirements</span></div>
+            <div class="row pb-reveal d2"><span class="design-arr old" aria-hidden="true">&darr;</span><span class="design-hand">handoff</span></div>
+            <div class="row pb-reveal d3"><span class="design-box">Designers parse them back into a design</span></div>
+          </div>
+          <p style="margin-top:14px">Separate phases, separate teams. Meaning gets lost between them.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div class="new pb-reveal d2">
+          <span class="pb-chip agent">AI-native</span>
+          <h3 style="margin-top:10px">One prompted session</h3>
+          <div class="design-split">
+            <div class="row pb-reveal d2"><span class="pb-file">intent.md</span><span class="design-arr" aria-hidden="true">+</span><span class="pb-chip gate">Skills</span></div>
+            <div class="row pb-reveal d3"><span class="design-arr" aria-hidden="true">&darr;</span><span class="pb-chip agent">Claude, one session</span></div>
+            <div class="row pb-reveal d4"><span class="pb-file">spec.md</span><span class="pb-chip gate">with flagged concerns</span></div>
+          </div>
+          <p style="margin-top:14px">The product owner reviews the spec. They do not write it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inputs flowing -->
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">What goes in, what comes out</span>
+        <h2>The intent plus your standards, in one place</h2>
+        <p class="pb-lede">Brand, security, compliance and UX policies are written as skills. Claude applies them while it writes, so conflicts show up in the spec and not weeks later in review.</p>
+      </div>
+      <div class="design-flow pb-reveal">
+        <div class="design-ins">
+          <span class="grp">The idea</span>
+          <span class="pb-file">intent.md</span>
+          <span class="grp">Standards as skills</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pb-chip gate">Brand</span><span class="pb-chip gate">Security</span><span class="pb-chip gate">Compliance</span><span class="pb-chip gate">UX</span></div>
+        </div>
+        <svg class="design-wires" viewBox="0 0 120 250" preserveAspectRatio="none" aria-hidden="true">
+          <path pathLength="1" d="M0 40 C60 40 60 125 120 125"/>
+          <path pathLength="1" d="M0 105 C60 105 60 125 120 125"/>
+          <path pathLength="1" d="M0 150 C60 150 60 125 120 125"/>
+          <path pathLength="1" d="M0 190 C60 190 60 125 120 125"/>
+          <path pathLength="1" d="M0 225 C60 225 60 125 120 125"/>
+        </svg>
+        <div class="design-sess">
+          <span class="pb-chip human">Product owner opens the session</span>
+          <h3>One working session</h3>
+          <p>Claude takes the intent and writes requirements and design together, constrained by the skills.</p>
+        </div>
+        <div class="design-out" aria-hidden="true"><svg viewBox="0 0 40 24"><path pathLength="1" d="M4 12 H34 M26 4 L35 12 L26 20"/></svg></div>
+        <div class="design-result">
+          <span class="pb-file">spec.md</span>
+          <span>Numbered requirements, a design, and areas of concern.</span>
+          <span class="pb-chip gate">Flagged concerns, each with an owner</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Play -->
+  <section class="pb-section" id="play">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The play</span>
+        <h2>Requirements and design</h2>
+        <p class="pb-lede">Step through it. Inputs and routing are on the left and the spec grows on the right. It continues the insurer's claims status example from Stage 1.</p>
+      </div>
+      <div class="pb-play pb-reveal" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">2</div>
+          <div>
+            <h3>Requirements and design</h3>
+            <p>Claude turns an accepted intent.md into a spec engineering can plan against, with flagged areas of concern.</p>
+          </div>
+        </div>
+
+        <div class="design-steps" data-pb-steps>
+          <div class="design-nav" role="group" aria-label="Steps">
+            <button type="button" class="pb-step" data-pb-goto="0"><b>1</b><span>Open the session</span></button>
+            <button type="button" class="pb-step" data-pb-goto="1"><b>2</b><span>Prompt</span></button>
+            <button type="button" class="pb-step" data-pb-goto="2"><b>3</b><span>Review</span></button>
+            <button type="button" class="pb-step" data-pb-goto="3"><b>4</b><span>Resolve concerns</span></button>
+            <button type="button" class="pb-step" data-pb-goto="4"><b>5</b><span>Commit</span></button>
+            <button type="button" class="pb-step" data-pb-goto="5"><b>6</b><span>Decide</span></button>
+          </div>
+          <div class="design-stage">
+            <div class="design-left">
+              <div class="design-pane" data-at="0">
+                <span class="pb-chip human">Product owner</span>
+                <span>Opens a session with the org's skills available and attaches the intent.</span>
+                <div class="chips"><span class="pb-file">intent.md</span><span class="pb-chip gate">secure-api-review</span><span class="pb-chip gate">brand-voice</span><span class="pb-chip gate">portal-ux</span></div>
+              </div>
+              <div class="design-pane" data-at="1">
+                <span class="pb-chip human">The prompt</span>
+                <span class="pr">Read the attached intent.md. Write a requirements and design spec for our codebase. Apply the skills. Write it as spec.md for the engineering team. Describe any areas of concern, especially where policies conflict.</span>
+              </div>
+              <div class="design-pane" data-at="3">
+                <span class="pb-chip human">Product owner routes each concern to its policy owner</span>
+                <div class="design-route">
+                  <span class="rt" style="--i:0">Concern 1</span><span class="rt" style="--i:0"><i aria-hidden="true">&rarr;</i><span class="pb-chip gate">security</span></span>
+                  <span class="rt" style="--i:1">Concern 2</span><span class="rt" style="--i:1"><i aria-hidden="true">&rarr;</i><span class="pb-chip gate">compliance</span></span>
+                  <span class="rt" style="--i:2">Concern 3</span><span class="rt" style="--i:2"><i aria-hidden="true">&rarr;</i><span class="pb-chip gate">claims-core team</span></span>
+                </div>
+              </div>
+              <div class="design-pane" data-at="5">
+                <span class="pb-chip human">Product owner decides</span>
+                <span>Consults a tech lead for higher-risk items. A human teammate always makes this call.</span>
+                <span class="pb-chip agent">Accepted spec starts plan mode</span>
+              </div>
+            </div>
+            <div>
+              <div class="design-doc">
+                <div class="bar"><span class="pb-file">spec.md</span><span class="pb-chip old">From intent.md</span><span class="pb-chip gate design-late" data-at="1">Ready for product owner review</span></div>
+                <div class="design-skel" data-at="0" data-until="1" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="design-sec reqs" data-at="1" style="--i:0"><b class="h">Requirements</b>
+                  <ul>
+                    <li><em>R1</em><span>A signed-in customer sees status, next step and expected date for each open claim. <span class="design-ck" data-at="2">&#10003;</span></span></li>
+                    <li><em>R2</em><span>Status is one of four states: received, in review, approved, paid. <span class="design-ck" data-at="2">&#10003;</span></span></li>
+                    <li><em>R3</em><span>The response carries those three fields and nothing else. <span class="design-ck" data-at="2">&#10003;</span></span></li>
+                    <li><em>R4</em><span>What the customer sees is at most 60 seconds old. <span class="design-ck" data-at="2">&#10003;</span></span></li>
+                  </ul></div>
+                <div class="design-sec" data-at="1" style="--i:1"><b class="h">Design</b>
+                  <ul>
+                    <li><span>New endpoint <code>GET /claims/{id}/status</code> in <code>claims-api</code>, behind the gateway JWT.</span></li>
+                    <li><span><code>claims-api</code> reads from <code>claims-core</code>. The portal never calls <code>claims-core</code>.</span></li>
+                    <li><span>New StatusPanel on the portal claims page, caching each answer 60 seconds.</span></li>
+                  </ul></div>
+                <div class="design-sec" data-at="1" style="--i:2"><b class="h">Constraints to implementation</b>
+                  <ul>
+                    <li><span>"No new PII" is met by R3.</span></li>
+                    <li><span>"Existing authentication only" is met by the gateway JWT.</span></li>
+                  </ul></div>
+                <div class="design-sec concerns" data-at="1" style="--i:3"><b class="h">Areas of concern</b>
+                  <ul>
+                    <li><em>1</em><span>Loss adjusters have no portal account. Access would break "existing authentication only". (The open question from intent.md, carried forward.)</span><span class="own pb-chip gate">security</span></li>
+                    <li><em>2</em><span>portal-ux says every status shows a date. brand-voice says never state a payment date as a commitment. Proposed label: "Estimated date".</span><span class="own pb-chip gate">compliance</span></li>
+                    <li><em>3</em><span>claims-core allows 50 requests per second. The 60 second cache should stay under that, but it is not load tested.</span><span class="own pb-chip gate">claims-core team</span></li>
+                  </ul></div>
+              </div>
+              <div class="design-pair" data-at="4"><span class="pb-file">intent.md</span><span class="design-arr" aria-hidden="true">+</span><span class="pb-file">spec.md</span><span>"The file pair records what was asked for and what was decided."</span></div>
+            </div>
+          </div>
+          <p class="design-cap" data-only="0"><span class="pb-chip human">Product owner</span>Opens a session with the org's skills available and attaches intent.md. No engineering skill is needed.</p>
+          <p class="design-cap" data-only="1" hidden><span class="pb-chip agent">Claude</span>The prompt points at the intent, names the constraints and demands flagged concerns. Claude writes the spec with the skills applied.</p>
+          <p class="design-cap" data-only="2" hidden><span class="pb-chip human">Product owner</span>Reviews the spec against the idea. Does it solve the stated problem? Are the open questions answered or carried forward?</p>
+          <p class="design-cap" data-only="3" hidden><span class="pb-chip gate">Concerns first</span>These are what an analyst would have escalated. Each is resolved with its policy owner before engineering sees the spec. Concern 2 is two skills in conflict.</p>
+          <p class="design-cap" data-only="4" hidden><span class="pb-chip gate">Commit</span>spec.md is committed next to intent.md. The prompt and the skill versions in force are logged in version control.</p>
+          <p class="design-cap" data-only="5" hidden><span class="pb-chip human">Product owner</span>Decides whether spec and intent proceed to build. Accepting the spec starts the plan mode play in Stage 3.</p>
+          <div class="pb-steps-ui">
+            <button type="button" class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button type="button" class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button type="button" class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+            <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div role="tablist" aria-label="Requirements and design">
+          <button role="tab" id="dt1" aria-controls="dp1" aria-selected="true" type="button">What changes</button>
+          <button role="tab" id="dt2" aria-controls="dp2" aria-selected="false" tabindex="-1" type="button">Getting started</button>
+          <button role="tab" id="dt3" aria-controls="dp3" aria-selected="false" tabindex="-1" type="button">How to run it</button>
+          <button role="tab" id="dt4" aria-controls="dp4" aria-selected="false" tabindex="-1" type="button">Governance</button>
+          <button role="tab" id="dt5" aria-controls="dp5" aria-selected="false" tabindex="-1" type="button">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="dp1" aria-labelledby="dt1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><h3>Separate phases, separate teams</h3><p>Analysts formalize requirements and designers parse them back into a design. The separation exists for accountability, but it is slow and lossy.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><h3>One prompted session</h3><p>Claude takes intent.md and produces a spec constrained by the org's skills, with areas of concern flagged.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="dp2" aria-labelledby="dt2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card file"><h3>Prerequisites</h3><p>An accepted <span class="pb-file">intent.md</span>, and brand, security, compliance and UX policies written as skills.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3><p>A product owner with Claude access. No engineering skill is required.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="dp3" aria-labelledby="dt3" hidden>
+          <ol class="pb-list">
+            <li><span><span class="pb-chip human">Product owner</span> opens a session with the org's skills available and attaches intent.md.</span></li>
+            <li><span><span class="pb-chip agent">Claude</span> gets a prompt that points at the intent, names the constraints and demands flagged concerns. See the three ways to start it below.</span></li>
+            <li><span><span class="pb-chip human">Product owner</span> reviews the spec against the idea.</span></li>
+            <li><span><span class="pb-chip human">Product owner</span> works through the flagged concerns first, with each policy owner.</span></li>
+            <li><span><span class="pb-chip gate">Commit</span> spec.md alongside intent.md.</span></li>
+            <li><span><span class="pb-chip human">Product owner</span> decides if spec and intent proceed to build. A tech lead is consulted for higher-risk items.</span></li>
+          </ol>
+          <div class="pb-card" style="margin-top:16px"><h3>A front-end variant</h3><p>After intent.md is accepted, the product owner mocks up the design in Claude Design from the intent, iterates, then exports to Claude Code to build. The course marks Claude Design as beta.</p></div>
+        </div>
+        <div role="tabpanel" id="dp4" aria-labelledby="dt4" hidden>
+          <div class="pb-grid">
+            <div class="pb-card gate"><h3>Skills act as constraints</h3><p>Policy conflicts are caught while the spec is written, not weeks later in review.</p></div>
+            <div class="pb-card file"><h3>Everything is logged</h3><p>The spec, the prompt and the skill versions in force all live in version control.</p></div>
+            <div class="pb-card human"><h3>The product owner signs off</h3><p>They route concerns to the named policy owners. A tech lead is consulted for higher risk.</p></div>
+          </div>
+          <p style="margin-top:16px"><span class="pb-chip agent">Claude</span> or a CI job drafts the spec. Policy owners own the source of truth for each skill and receive the flagged concerns.</p>
+        </div>
+        <div role="tabpanel" id="dp5" aria-labelledby="dt5" hidden>
+          <div class="design-line pb-reveal" role="img" aria-label="Elapsed time between the intent.md commit and the spec.md commit for the same change.">
+            <span class="dot"><span class="pb-file">intent.md</span> committed</span><span class="rail"></span><span class="dot"><span class="pb-file">spec.md</span> committed</span>
+          </div>
+          <div class="pb-metric">
+            <div><b>Leading</b>Elapsed time between the intent.md commit and the spec.md commit for the same change (two Git timestamps), compared with the old requirements-plus-design cycle.</div>
+            <div><b>Lagging</b>Requirements rework after build starts: the count of spec.md commits dated after the first plan.md commit for the same change, from git log.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Triggers -->
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">How it gets triggered</span>
+        <h2>Start by hand, then automate</h2>
+        <p class="pb-lede">Adoption has three rungs. Each one removes a manual step.</p>
+      </div>
+      <div class="pb-play pb-reveal" style="padding:22px 28px 26px">
+        <div data-pb-steps>
+          <div class="design-rungs">
+            <div class="design-rung pb-step" data-at="0"><span class="n">1</span><div><h3>A manual prompt</h3><p>The product owner runs the prompt by hand in a session with skills and intent.md attached.</p></div></div>
+            <div class="design-rung pb-step" data-at="1"><span class="n">2</span><div><h3>An org slash command</h3><p>The prompt is codified as an organization-level slash command, so everyone runs the same pass.</p></div></div>
+            <div class="design-rung pb-step" data-at="2"><span class="n">3</span><div><h3>Triggered on merge of intent.md</h3><p>Accepting intent.md fires a non-interactive job. The product owner's first involvement is the review.</p>
+              <div class="design-chain">
+                <span class="pb-chip human">Merge intent.md</span><span class="design-arr" aria-hidden="true">&rarr;</span>
+                <span class="pb-chip agent">Job runs the pass with skills loaded</span><span class="design-arr" aria-hidden="true">&rarr;</span>
+                <span class="pb-chip gate">spec.md opened as a pull request</span>
+              </div>
+              <p class="pb-source" style="margin-top:8px">The CI/CD play in <a href="{{BP}}/deploy/">Stage 5</a> covers the plumbing.</p></div></div>
+          </div>
+          <div class="pb-steps-ui">
+            <button type="button" class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button type="button" class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button type="button" class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+                        <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hand off -->
+  <section class="pb-section dark">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker" style="color:#fda4af">What it hands on</span>
+        <h2>An approved spec.md starts plan mode</h2>
+        <p class="pb-lede">Design is the second half of a pair. An accepted intent.md triggered it. An approved spec.md triggers Stage 3.</p>
+      </div>
+      <div class="design-hand-row pb-reveal">
+        <div class="col"><span class="pb-chip human">Product owner approves</span><span class="pb-file">spec.md</span><p>Committed next to intent.md, with its concerns resolved or carried.</p></div>
+        <svg viewBox="0 0 90 60" aria-hidden="true"><path class="l" pathLength="1" d="M6 30 H76"/><path class="h" d="M72 22 L86 30 L72 38 Z"/></svg>
+        <div class="col"><span class="pb-chip agent">Triggers</span><h3>Plan mode first</h3><p>An engineer gives Claude the spec and iterates on a plan before any code changes.</p><a class="pb-btn red" href="{{BP}}/build/">Go to Stage 3: Build &rarr;</a></div>
+      </div>
+      <p style="margin-top:18px"><a class="pb-source" style="color:#cbd5e1" href="{{BP}}/plan/">&larr; Back to Stage 1: an accepted intent.md is what started this stage.</a></p>
+    </div>
+  </section>
+
+  <!-- Takeaways -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-takeaways pb-reveal">
+        <h3>Key takeaways</h3>
+        <ul>
+          <li>Requirements and design happen in one session, with Claude drafting and the product owner reviewing.</li>
+          <li>Brand, security, compliance and UX policies are skills, so they constrain the spec as it is written.</li>
+          <li>Flagged concerns go to named policy owners before engineering sees the spec.</li>
+          <li>Start with a manual prompt, then an org slash command, then a job that runs when intent.md merges.</li>
+          <li>Measure the time from intent.md to spec.md, and how often the spec changes after planning begins.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+<!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  function bind(root) {
+    function apply(n) {
+      [].forEach.call(root.querySelectorAll('[data-at]'), function (x) {
+        var at = +x.getAttribute('data-at'), un = x.getAttribute('data-until');
+        x.classList.toggle('show', at <= n);
+        x.classList.toggle('cur', at === n);
+        x.classList.toggle('gone', un !== null && n >= +un);
+      });
+      [].forEach.call(root.querySelectorAll('[data-only]'), function (x) {
+        x.hidden = +x.getAttribute('data-only') !== n;
+      });
+    }
+    root.addEventListener('pb:step', function (e) { apply(e.detail); });
+    var s = root.getAttribute('data-step'); if (s !== null) apply(+s);
+    root.addEventListener('keydown', function (e) {
+      if (!e.target.closest('button')) return;
+      var b = e.key === 'ArrowRight' ? root.querySelector('[data-pb-next]') : e.key === 'ArrowLeft' ? root.querySelector('[data-pb-prev]') : null;
+      if (b && !b.disabled) { e.preventDefault(); b.click(); }
+    });
+  }
+  [].forEach.call(document.querySelectorAll('[data-pb-steps]'), bind);
+})();
+</script>
+</body>
+</html>

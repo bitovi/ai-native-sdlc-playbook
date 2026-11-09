@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 3: Build | Bitovi</title>
+<meta name="description" content="Plan mode first, CLAUDE.md, skills and hooks, and parallel sessions with subagents: the four plays of the Build stage.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+/* Build page only (prefix build-) */
+.build-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.build-picker a { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border: 1.5px solid var(--pb-line); border-radius: 14px; text-decoration: none; color: var(--pb-ink); background: #fff; transition: border-color .2s, transform .2s var(--pb-ease), box-shadow .2s; }
+.build-picker a:hover { border-color: var(--pb-red); transform: translateY(-2px); box-shadow: var(--pb-shadow); }
+.build-picker a[aria-current="true"] { border-color: var(--pb-ink); background: var(--pb-soft); }
+.build-picker i { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--pb-ink); color: #fff; font-style: normal; font-family: var(--pb-display); font-weight: 800; display: grid; place-items: center; }
+.build-picker a[aria-current="true"] i { background: var(--pb-red); }
+.build-picker b { display: block; font-family: var(--pb-display); font-size: 15px; line-height: 1.25; }
+.build-picker small { display: block; color: var(--pb-muted); font-size: 13px; line-height: 1.3; }
+.pb-play { scroll-margin-top: 72px; }
+.pb-page .build-h2 { font-size: 20px; margin: 36px 0 16px; }
+@media (min-width: 961px) { .build-stage { position: sticky; top: 64px; } }
+.build-roles .pb-card h3 { font-size: 17px; }
+.build-roles .pb-card p { font-size: 15px; }
+
+.build-runwrap { padding: 24px 28px 8px; }
+.build-h { font-family: var(--pb-display); font-size: 17px; margin: 0 0 12px; color: var(--pb-ink); }
+.build-intro { margin-bottom: 14px; font-size: 16px; }
+.build-ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 16px; }
+.pb-metric .build-ul { padding-left: 18px; }
+.build-small { font-size: 14px; color: var(--pb-muted); margin-top: 8px; }
+.build-example { margin-top: 20px; padding: 16px 18px; border-radius: 12px; background: var(--pb-soft); border-left: 4px solid var(--pb-file); font-size: 16px; }
+.build-example > b { font-family: var(--pb-display); display: block; margin-bottom: 4px; }
+.pb-list span { flex: 1; min-width: 0; }
+.pb-page code { font-family: var(--pb-mono); font-size: .88em; background: var(--pb-file-bg); color: var(--pb-file); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+.pb-takeaways code { background: rgba(255,255,255,.12); color: #c7d2fe; }
+
+/* step-through */
+.build-run-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.build-steps-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.build-steps-list .pb-step { border-radius: 12px; border: 1.5px solid transparent; }
+.build-steps-list .pb-step.on { border-color: var(--pb-ink); background: #fff; box-shadow: var(--pb-shadow); }
+.build-stepbtn { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: 10px 12px; cursor: pointer; border-radius: 12px; }
+.build-stepbtn b { font-family: var(--pb-display); font-size: 15px; color: var(--pb-ink); margin-right: 4px; }
+.build-body { display: block; font-size: 15px; line-height: 1.5; margin-top: 4px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .4s var(--pb-ease), opacity .3s; }
+.pb-step.on .build-body { max-height: 200px; opacity: 1; }
+.build-n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--pb-old-bg); color: var(--pb-muted); font-family: var(--pb-display); font-weight: 700; font-size: 13px; display: grid; place-items: center; transition: background .3s, color .3s; }
+.pb-step.on .build-n { background: var(--pb-red); color: #fff; }
+.pb-step.done .build-n { background: var(--pb-ink); color: #fff; }
+.build-stage { position: relative; height: var(--h); border-radius: 14px; background: var(--pb-soft); border: 1px solid var(--pb-line); overflow: hidden; }
+.build-cols { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--n), 1fr); }
+.build-col { border-right: 1px dashed var(--pb-line); padding: 10px 6px; text-align: center; transition: background .35s; }
+.build-col:last-child { border-right: 0; }
+.build-col.hl { background: rgba(79,70,229,.07); }
+.build-col .pb-chip { font-size: 12px; padding: 2px 8px; white-space: normal; text-align: center; }
+.build-tok { position: absolute; left: 0; top: 0; max-width: calc(100% / var(--n) - 12px); font-size: 12px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; opacity: 0; transform: scale(.85); pointer-events: none; transition: left .7s var(--pb-ease), top .7s var(--pb-ease), opacity .4s, transform .4s var(--pb-ease); }
+.build-tok.show { opacity: 1; transform: none; }
+.build-tok.pb-file { font-size: 12px; white-space: normal; }
+.build-tok.pb-chip { border-radius: 10px; }
+
+/* extras inside a play card */
+.build-extra { margin: 8px 28px 28px; padding: 22px 24px; border-radius: 16px; background: var(--pb-soft); border: 1px solid var(--pb-line); }
+.build-extra + .build-extra { margin-top: 0; }
+.build-extra-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.build-extra-head h4 { font-size: 19px; }
+.build-extra > p { margin-bottom: 14px; font-size: 16px; }
+.build-extra .pb-card { background: #fff; }
+.build-extra .pb-card h4 { font-size: 16px; }
+.build-extra .pb-card p { font-size: 15px; }
+.build-extra .pb-grid { margin: 14px 0; }
+.build-guard { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.build-g { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #fff; border: 1.5px solid var(--pb-line); font-size: 15px; font-weight: 700; opacity: .35; transform: translateY(8px); transition: opacity .5s var(--pb-ease), transform .5s var(--pb-ease), border-color .5s; }
+.build-g i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--pb-gate); transition: background .4s; }
+.pb-reveal.in .build-g { opacity: 1; transform: none; border-color: var(--pb-gate); }
+.pb-reveal.in .build-g i { background: var(--pb-gate); }
+.build-g:nth-child(2), .build-g:nth-child(2) i { transition-delay: .35s; }
+.build-g:nth-child(3), .build-g:nth-child(3) i { transition-delay: .7s; }
+.build-g:nth-child(4), .build-g:nth-child(4) i { transition-delay: 1.05s; }
+.build-g.end { transition-delay: 1.5s; background: var(--pb-agent-bg); }
+.pb-reveal.in .build-g.end { border-color: var(--pb-agent); }
+.build-g.end i { border-color: var(--pb-agent); transition-delay: 1.5s; }
+.pb-reveal.in .build-g.end i { background: var(--pb-agent); }
+.build-link { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: center; margin: 6px 0 14px; }
+.build-lbox { background: #fff; border: 1.5px solid var(--pb-line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; justify-items: start; }
+.build-lbox small { font-size: 14px; color: var(--pb-body); line-height: 1.4; }
+.build-arrows { display: grid; gap: 10px; text-align: center; font-family: var(--pb-mono); font-size: 13px; font-weight: 700; }
+.build-arrows span { padding: 4px 8px; border-bottom: 3px solid var(--pb-agent); transform-origin: left; transform: scaleX(0); transition: transform .8s var(--pb-ease) .3s; }
+.build-arrows .a2 { border-bottom-color: var(--pb-file); transform-origin: right; transition-delay: .9s; }
+.pb-reveal.in .build-arrows span { transform: none; }
+
+/* CLAUDE.md visual */
+.build-claudemd { border: 1.5px solid var(--pb-line); border-radius: 16px; padding: 20px; background: #fff; }
+.build-cm-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.build-page { font-family: var(--pb-display); font-weight: 700; font-size: 13px; color: var(--pb-gate); background: var(--pb-gate-bg); padding: 3px 10px; border-radius: 999px; }
+.build-cm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.build-cm { background: var(--pb-file-bg); border-radius: 12px; padding: 14px 16px; opacity: 0; transform: translateY(10px); transition: opacity .5s var(--pb-ease), transform .5s var(--pb-ease); }
+.build-cm b { font-family: var(--pb-display); color: var(--pb-file); font-size: 14px; }
+.build-cm p { font-size: 14.5px; line-height: 1.45; margin-top: 4px; color: var(--pb-ink); }
+.build-cm.warn { background: var(--pb-human-bg); }
+.build-cm.warn b { color: var(--pb-human); }
+.pb-reveal.in .build-cm { opacity: 1; transform: none; }
+.build-cm:nth-child(2) { transition-delay: .2s; } .build-cm:nth-child(3) { transition-delay: .4s; } .build-cm:nth-child(4) { transition-delay: .6s; }
+.build-meter { height: 8px; border-radius: 99px; background: var(--pb-line); margin-top: 16px; overflow: hidden; }
+.build-meter span { display: block; height: 100%; width: 0; background: var(--pb-agent); border-radius: 99px; transition: width 1.2s var(--pb-ease) .8s; }
+.pb-reveal.in .build-meter span { width: 82%; }
+
+/* sorter */
+.build-sorter { border: 1.5px solid var(--pb-line); border-radius: 16px; padding: 18px; background: #fff; }
+.build-sort-top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.build-sort-top > div { display: grid; gap: 6px; justify-items: start; }
+.build-sort-top small { font-size: 14px; line-height: 1.4; color: var(--pb-body); }
+.build-sort-card { background: var(--pb-soft); border-radius: 14px; padding: 20px; min-height: 190px; }
+.build-sort-count { font-size: 13px; font-weight: 700; color: var(--pb-muted); font-family: var(--pb-display); letter-spacing: .5px; text-transform: uppercase; }
+.build-rule { font-family: var(--pb-display); font-size: 19px; font-weight: 600; color: var(--pb-ink); margin: 8px 0 16px; line-height: 1.35; }
+.build-choices { display: flex; gap: 10px; flex-wrap: wrap; }
+.build-choice { font: inherit; font-family: var(--pb-display); font-weight: 700; font-size: 15px; padding: 10px 18px; border-radius: 10px; background: #fff; border: 2px solid var(--pb-line); color: var(--pb-ink); cursor: pointer; }
+.build-choice[data-k="claude"], .build-choice[data-k="skill"] { border-color: var(--pb-file); }
+.build-choice[data-k="hook"] { border-color: var(--pb-gate); }
+.build-choice:hover:not(:disabled) { background: var(--pb-file-bg); }
+.build-choice[data-k="hook"]:hover:not(:disabled) { background: var(--pb-gate-bg); }
+.build-choice:disabled { cursor: default; opacity: .55; }
+.build-choice.right { opacity: 1; background: var(--pb-agent-bg); border-color: var(--pb-agent); color: var(--pb-agent); }
+.build-choice.wrong { opacity: 1; background: var(--pb-human-bg); border-color: var(--pb-human); color: var(--pb-human); }
+.build-verdict { margin-top: 16px; animation: pb-fade .35s var(--pb-ease); }
+.build-verdict p { font-size: 16px; }
+.build-verdict .pb-btn { margin-top: 12px; }
+.build-score { font-family: var(--pb-display); font-size: 22px; color: var(--pb-ink); margin: 6px 0 10px; font-weight: 700; }
+
+/* hand-off */
+.build-hand { display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr) 56px minmax(0, 1fr); align-items: stretch; }
+.build-hbox { background: #fff; border: 1.5px solid var(--pb-line); border-radius: 16px; padding: 20px; display: grid; gap: 8px; align-content: start; justify-items: start; }
+.build-hbox small { font-family: var(--pb-display); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-muted); font-size: 12px; }
+.build-hbox.out { border-color: var(--pb-agent); box-shadow: var(--pb-shadow); }
+.build-harrow { position: relative; }
+.build-harrow i { position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; background: var(--pb-agent); transform: scaleX(0); transform-origin: left; transition: transform .8s var(--pb-ease) .4s; }
+.build-harrow i::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left: 9px solid var(--pb-agent); }
+.pb-reveal.in .build-harrow i { transform: none; }
+
+@media (max-width: 960px) {
+  .build-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .build-run-grid { grid-template-columns: 1fr; }
+  .build-stage { order: -1; }
+}
+@media (max-width: 640px) {
+  .build-picker { grid-template-columns: 1fr; }
+  .build-runwrap { padding: 20px 18px 6px; }
+  .build-extra { margin: 8px 14px 18px; padding: 18px 16px; }
+  .build-cm-grid, .build-sort-top, .build-link { grid-template-columns: 1fr; }
+  .build-hand { grid-template-columns: 1fr; }
+  .build-harrow { height: 36px; }
+  .build-harrow i { left: 50%; right: auto; top: 6px; width: 3px; height: 24px; transform: scaleY(0); transform-origin: top; }
+  .build-harrow i::after { right: auto; left: -5px; top: auto; bottom: -8px; border: 6px solid transparent; border-top: 9px solid var(--pb-agent); border-left-color: transparent; }
+  .pb-reveal.in .build-harrow i { transform: none; }
+  .build-tok, .build-tok.pb-file { font-size: 11px; }
+  .build-col .pb-chip { font-size: 11px; }
+  .build-arrows { grid-auto-flow: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .build-steps-list .pb-step { opacity: 1; }
+  .build-body { max-height: none; opacity: 1; }
+  .build-cm, .build-g { opacity: 1; transform: none; }
+  .build-meter span { width: 82%; }
+  .build-arrows span, .build-harrow i { transform: none; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 3: Build</h1>
+        <p class="lead">Four plays. Claude writes the code and the tests. People own the plan, the rules and the review.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section" style="padding-bottom:40px"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Four plays</span><h2>Pick a play</h2><p class="pb-lede">Plays are modular. Start with the one that fits where your team is today.</p></div>
+    <nav class="build-picker" aria-label="Jump to a play"><a href="#play-1" data-play="1"><i>1</i><span><b>Plan mode first</b><small>Plan, then build</small></span></a><a href="#play-2" data-play="2"><i>2</i><span><b>CLAUDE.md</b><small>Shared context</small></span></a><a href="#play-3" data-play="3"><i>3</i><span><b>Skills and hooks</b><small>Rules that hold</small></span></a><a href="#play-4" data-play="4"><i>4</i><span><b>Parallel sessions</b><small>Steer several at once</small></span></a></nav>
+  </div></section>
+
+  <section class="pb-section soft"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">The shift</span><h2>Claude writes the code. People own the plan.</h2></div>
+    <div class="pb-reveal d1">
+    <div class="pb-shift">
+      <div class="old"><h3><span class="pb-chip old">Traditional</span></h3><p>Tests and code are handwritten. Documentation is written after development.</p></div>
+      <div class="arrow" aria-hidden="true">&rarr;</div>
+      <div class="new"><h3><span class="pb-chip agent">AI-native</span></h3><p>Tests and code are generated by AI. Institutional knowledge lives in versioned, machine-readable <span class="pb-file">CLAUDE.md</span> files and skills.</p></div>
+    </div>
+    <div class="pb-legend"><span class="pb-chip human">A person decides</span><span class="pb-chip agent">Claude does the work</span><span class="pb-chip gate">A gate or control</span><span class="pb-file">A committed artifact</span></div>
+    </div>
+    <h3 class="build-h2 pb-reveal">Who does what in Build</h3>
+    <div class="pb-grid four build-roles">
+      <div class="pb-card human pb-reveal"><h3>Engineer</h3><p>Corrects and accepts <span class="pb-file">plan.md</span>. Runs plan mode and the sessions. Writes skills from the policy owner's source. Owns CLAUDE.md corrections.</p></div>
+      <div class="pb-card agent pb-reveal d1"><h3>Claude</h3><p>Drafts <span class="pb-file">plan.md</span> in plan mode. Implements. Verifies its own work.</p></div>
+      <div class="pb-card human pb-reveal d2"><h3>Policy owners</h3><p>Own the source of truth for each skill. Sign off skill changes.</p></div>
+      <div class="pb-card gate pb-reveal d3"><h3>Tech lead or architect</h3><p>Approves higher-risk plans.</p></div>
+    </div>
+  </div></section>
+
+  <section class="pb-section"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Play 1</span><h2>Plan mode first</h2></div>
+    <article class="pb-play pb-reveal" id="play-1">
+<div class="pb-play-head"><div class="num">1</div><div><h3>Plan mode first</h3><p>Engineers start in plan mode with the approved spec. The plan is committed as plan.md.</p></div></div>
+<div class="build-runwrap"><h4 class="build-h">Watch it run</h4><div class="build-run" data-pb-steps role="group" aria-label="Plan mode step-through">
+  <div class="build-run-grid">
+    <ol class="build-steps-list"><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="0"><span class="build-n">1</span><span><b>An approved spec.md starts plan mode</b> <span class="pb-chip human">You</span><span class="build-body">The approved <span class='pb-file'>spec.md</span> is the trigger. Start the session in plan mode.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="1"><span class="build-n">2</span><span><b>spec.md goes in. Claude reads the code</b> <span class="pb-chip agent">Claude</span><span class="build-body">In plan mode Claude can read the codebase but cannot change anything.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="2"><span class="build-n">3</span><span><b>plan.md appears</b> <span class="pb-chip agent">Claude</span><span class="build-body">Claude drafts the files that change, the order of the work, and the tests that prove it.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="3"><span class="build-n">4</span><span><b>You correct the plan</b> <span class="pb-chip human">You</span><span class="build-body">Ask what could break, which step is riskiest, and which options were rejected. Iterate until someone who never saw the chat could build from it.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="4"><span class="build-n">5</span><span><b>You accept and commit plan.md</b> <span class="pb-chip human">You</span><span class="build-body">The approved plan joins the audit trail. Later stages check the diff against it.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="5"><span class="build-n">6</span><span><b>Claude implements</b> <span class="pb-chip agent">Claude</span><span class="build-body">With a solid plan, the implementation is often a single pass.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="6"><span class="build-n">7</span><span><b>If the work departs, update plan.md</b> <span class="pb-chip gate">Gate</span><span class="build-body">Change plan.md in the same commit. A hook can enforce the sync.</span></span></button></li></ol>
+    <div class="build-stage" style="--h:208px;--n:3" aria-hidden="true"><div class="build-cols"><div class="build-col" data-col="0"><span class="pb-chip human">You</span></div><div class="build-col" data-col="1"><span class="pb-chip agent">Plan mode</span></div><div class="build-col" data-col="2"><span class="pb-chip gate">Repo</span></div></div><span class="build-tok pb-file" data-pos='[[0, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]]'>spec.md</span><span class="build-tok pb-chip gate" data-pos='[[1, 2], [1, 2], [1, 2], [1, 2, "plan accepted"], [1, 2, "plan accepted"], [1, 2, "edits allowed"], [1, 2, "edits allowed"]]'>plan mode: read only</span><span class="build-tok pb-file" data-pos='[null, [2, 1], [2, 1], [2, 1], [2, 1], [2, 1, "diff + tests"], [2, 1, "diff + tests"]]'>codebase</span><span class="build-tok pb-file" data-pos='[null, null, [1, 1], [0, 1, "plan.md + fixes"], [2, 0], [2, 0], [2, 0, "plan.md (in sync)"]]'>plan.md</span><span class="build-tok pb-chip human" data-pos='[null, null, null, [0, 2], null, null, null]'>your corrections</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, null, null, null, [2, 2]]'>hook can check sync</span></div>
+  </div>
+  <div class="pb-steps-ui"><button class="pb-btn ghost" data-pb-prev>Prev</button><button class="pb-btn red" data-pb-play>&#9654; Play</button><button class="pb-btn ghost" data-pb-next>Next</button><span class="pb-status" data-pb-status role="status" aria-live="polite"></span></div>
+</div></div>
+<div data-pb-tabs><div role="tablist" aria-label="Play details">
+<button role="tab" id="p1-tab0" aria-controls="p1-p0" aria-selected="true">What changes</button>
+<button role="tab" id="p1-tab1" aria-controls="p1-p1" aria-selected="false" tabindex="-1">Getting started</button>
+<button role="tab" id="p1-tab2" aria-controls="p1-p2" aria-selected="false" tabindex="-1">How to run it</button>
+<button role="tab" id="p1-tab3" aria-controls="p1-p3" aria-selected="false" tabindex="-1">Governance</button>
+<button role="tab" id="p1-tab4" aria-controls="p1-p4" aria-selected="false" tabindex="-1">How to measure it</button>
+</div>
+<div role="tabpanel" id="p1-p0" aria-labelledby="p1-tab0"><div class="pb-shift"><div class="old"><h3><span class="pb-chip old">Traditional</span></h3><p>The engineer reads the design and starts coding. Which files change and which tests to write stay in their head or a ticket comment, so nobody else can review it. The reviewer first sees the finished diff, and by then rework is slow.</p></div><div class="arrow" aria-hidden="true">&rarr;</div><div class="new"><h3><span class="pb-chip agent">AI-native</span></h3><p>Work starts with a written plan from plan mode, where Claude can read the codebase but cannot change anything. The engineer corrects the plan. The approved version is committed as <span class='pb-file'>plan.md</span> for later stages to check against.</p></div></div></div>
+<div role="tabpanel" id="p1-p1" aria-labelledby="p1-tab1" hidden><div class="pb-grid two"><div class="pb-card"><h3>Prerequisites</h3><p>The intent artifact (<span class='pb-file'>intent.md</span> or <span class='pb-file'>spec.md</span>), if one exists.</p><p><span class='pb-file'>CLAUDE.md</span> helps.</p></div><div class="pb-card"><h3>Infrastructure</h3><p>Claude Code with repo access.</p></div></div></div>
+<div role="tabpanel" id="p1-p2" aria-labelledby="p1-tab2" hidden><ol class="pb-list"><li><span>Start the session in plan mode.</span></li><li><span>Give Claude <span class='pb-file'>intent.md</span> and <span class='pb-file'>spec.md</span>. Ask for a plan that names the files that change, the order of the work, and the tests that prove it.</span></li><li><span>Interrogate the plan: what could this break, which step is the riskiest, which other options were rejected.</span></li><li><span>Iterate until an engineer who never saw the conversation could implement from the plan alone.</span></li><li><span>Commit the approved plan as <span class='pb-file'>plan.md</span>. It joins the audit trail, and the PR review play checks the diff against it.</span></li><li><span>Accept the plan and let Claude implement.</span></li><li><span>If the implementation departs from the plan, update <span class='pb-file'>plan.md</span> in the same commit. Consider a hook to enforce the sync.</span></li></ol><div class="build-example"><b>Example <span class="pb-file">plan.md</span> (claims status)</b>
+  <ul class="build-ul"><li><b>Files that change:</b> StatusPanel.tsx (new), claims-api/routes/status.py, claims-api/tests/test_status.py.</li>
+  <li><b>Order of work:</b> the status endpoint behind existing auth, then the panel with a 60-second cache, then wire it into the portal nav.</li>
+  <li><b>Risks:</b> claims-core allows 50 requests per second, so reads must be cached.</li>
+  <li><b>Proof:</b> the tests cover the four claim states and fail on any extra field. A screenshot matches the approved mock.</li></ul>
+  <p class="build-small">The plan cites R1 to R4 and a spec concern, so a reviewer can check it line by line against the spec.</p></div></div>
+<div role="tabpanel" id="p1-p3" aria-labelledby="p1-tab3" hidden><ul class="build-ul"><li>Design review happens before any code, when changing course is still a matter of editing a document.</li><li>Plan mode enforces this. Claude cannot edit files until the engineer accepts the plan.</li><li>The plan, its revisions and who accepted it are logged.</li><li>Routine changes are approved by the engineer. Higher risk goes to a tech lead or architect.</li></ul></div>
+<div role="tabpanel" id="p1-p4" aria-labelledby="p1-tab4" hidden><div class="pb-metric"><div><b>Leading</b><ul class="build-ul"><li>Share of changes that merge from the first implementation pass.</li><li>Time from plan approval to merged PR (from PR metadata).</li></ul></div><div><b>Lagging</b><ul class="build-ul"><li>Rework cycles per change (PR metadata).</li><li>How often the merged diff still matches the committed <span class='pb-file'>plan.md</span>.</li></ul></div></div></div></div>
+<div class="build-extra pb-reveal">
+  <div class="build-extra-head"><span class="pb-chip agent">Auto mode</span><h4>Auto mode comes later, once guardrails mature</h4></div>
+  <p>You iterate on and approve the plan. Claude then applies each change without a per-edit prompt. Auto mode becomes the default for routine work as these four guardrails mature:</p>
+  <div class="build-guard" role="list">
+    <div class="build-g" role="listitem"><i></i>A tuned <span class="pb-file">CLAUDE.md</span></div>
+    <div class="build-g" role="listitem"><i></i>Skills that encode policy</div>
+    <div class="build-g" role="listitem"><i></i>Hooks that block unsafe actions</div>
+    <div class="build-g" role="listitem"><i></i>A test suite Claude can run</div>
+    <div class="build-g end" role="listitem"><i></i>Auto mode for routine work</div>
+  </div>
+  <ul class="build-ul">
+    <li>Good fit: a tight <span class="pb-file">spec.md</span>, a small blast radius, and code the tests already cover.</li>
+    <li>The shift is from watching the agent edit to reviewing artifacts after longer autonomous sessions.</li>
+    <li>With worktrees, auto mode enables parallelism across people and teams. The course calls it fundamental to running the SDLC autonomously and closing the loop in Stage 6.</li>
+  </ul>
+</div>
+<div class="build-extra pb-reveal">
+  <div class="build-extra-head"><span class="pb-chip gate">Legacy systems</span><h4>Fit around what exists: one source of truth per artifact</h4></div>
+  <p>Teams already track work in Jira, requirements in a traceable tool, designs in Figma and approvals with a change board. Auditors accept these, so they are hard to replace. Start with linkage, then name one source of truth for each artifact.</p>
+  <div class="build-link" role="img" aria-label="Linkage: the artifact notes the record ID, and the legacy record holds the commit SHA">
+    <div class="build-lbox"><span class="pb-file">spec.md</span><small>The artifact in the repo notes the <b>record ID</b></small></div>
+    <div class="build-arrows" aria-hidden="true"><span class="a1">record ID &rarr;</span><span class="a2">&larr; commit SHA</span></div>
+    <div class="build-lbox"><span class="pb-chip old">Legacy record</span><small>Jira, ServiceNow or a requirements tool holds the <b>commit SHA</b></small></div>
+  </div>
+  <div class="pb-grid">
+    <div class="pb-card gate"><h4>1. Linkage first</h4><p>The minimum bar and a good place to start. Artifacts note the record ID. Legacy records carry the commit SHA of the Markdown file. There are two sources of truth, and that is accepted for now.</p></div>
+    <div class="pb-card file"><h4>2. The repo is the truth</h4><p>Markdown artifacts are authoritative. The legacy system references files within commits. One of the cleanest setups for engineering-led organizations: one tool, one timestamp authority.</p></div>
+    <div class="pb-card human"><h4>3. The legacy system is the truth</h4><p>Jira, ServiceNow or the requirements tool is authoritative. The Markdown files are working copies. Claude reads the record at session start and writes the outcome back through an MCP connector in the same session.</p></div>
+  </div>
+  <p class="build-small">The choice can differ for each artifact. Both can coexist as long as they are linked or one is declared the source of truth.</p>
+</div>
+</article>
+  </div></section>
+  <section class="pb-section soft"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Play 2</span><h2>CLAUDE.md</h2></div>
+    <article class="pb-play pb-reveal" id="play-2">
+<div class="pb-play-head"><div class="num">2</div><div><h3>CLAUDE.md</h3><p>The context a new joiner needs, read by Claude at the start of every session.</p></div></div>
+<div class="build-runwrap"><h4 class="build-h">What goes in</h4><div class="build-claudemd pb-reveal">
+  <div class="build-cm-head"><span class="pb-file">CLAUDE.md</span><span class="build-page">Stays under a page</span></div>
+  <div class="build-cm-grid">
+    <div class="build-cm"><b>Commands</b><p>make build, make test, make itest (needs docker), make lint (runs in CI), make run (portal on :3000, claims-api on :8000)</p></div>
+    <div class="build-cm"><b>Conventions</b><p>claims-api is Python 3.12 and FastAPI. The portal is TypeScript and React. Every endpoint needs a test. Dates cross the API as ISO 8601.</p></div>
+    <div class="build-cm"><b>Architecture</b><p>portal/, claims-api/ and intent/. Only claims-api talks to claims-core, which allows 50 requests per second. Cache reads, never poll it.</p></div>
+    <div class="build-cm warn"><b>Things Claude gets wrong</b><p>Do not log request or response bodies in claims-api (they can hold PII). Do not bump dependency versions, the platform team owns them.</p></div>
+  </div>
+  <div class="build-meter" aria-hidden="true"><span></span></div>
+  <p class="build-small">Claude reads all of it at the start of every session, so stale lines waste context. Example from the course's insurer claims portal.</p>
+</div></div>
+<div class="build-runwrap"><h4 class="build-h">How it is owned and corrected</h4><div class="build-run" data-pb-steps role="group" aria-label="CLAUDE.md step-through">
+  <div class="build-run-grid">
+    <ol class="build-steps-list"><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="0"><span class="build-n">1</span><span><b>/init writes a starting file</b> <span class="pb-chip agent">Claude</span><span class="build-body">Run <code>/init</code> in the repo. Claude generates a first CLAUDE.md.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="1"><span class="build-n">2</span><span><b>Cut it to what a new joiner needs</b> <span class="pb-chip human">You</span><span class="build-body">Build, test and lint commands, the conventions that matter, and what Claude keeps getting wrong.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="2"><span class="build-n">3</span><span><b>Check it in at the repo root</b> <span class="pb-chip gate">Review</span><span class="build-body">The team shares one version. Changes are reviewed like code, and code owners approve them.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="3"><span class="build-n">4</span><span><b>Claude makes the same mistake twice</b> <span class="pb-chip agent">Claude</span><span class="build-body">Now it is a pattern, so it goes in the file.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="4"><span class="build-n">5</span><span><b>The correction goes into CLAUDE.md</b> <span class="pb-chip human">You</span><span class="build-body">The rule: when Claude makes a mistake twice, the correction goes in. It is reviewed in a PR.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="5"><span class="build-n">6</span><span><b>Every session reads it at the start</b> <span class="pb-chip agent">Claude</span><span class="build-body">Knowledge from heads and wikis is now a file. Keep it under a page.</span></span></button></li></ol>
+    <div class="build-stage" style="--h:156px;--n:3" aria-hidden="true"><div class="build-cols"><div class="build-col" data-col="0"><span class="pb-chip agent">Claude</span></div><div class="build-col" data-col="1"><span class="pb-chip gate">CLAUDE.md</span></div><div class="build-col" data-col="2"><span class="pb-chip gate">Repo</span></div></div><span class="build-tok pb-file" data-pos='[[1, 0], [1, 0, "CLAUDE.md (short)"], [2, 0, "CLAUDE.md"], [2, 0, "CLAUDE.md"], [1, 0, "CLAUDE.md (corrected)"], [0, 0, "CLAUDE.md"]]'>CLAUDE.md (draft)</span><span class="build-tok pb-chip agent" data-pos='[[0, 1], null, null, null, null, null]'>/init</span><span class="build-tok pb-chip human" data-pos='[null, [1, 1], null, null, null, null]'>cut to day one</span><span class="build-tok pb-chip gate" data-pos='[null, null, [2, 1], null, null, null]'>code owners approve</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, [0, 1], null, null]'>same mistake, twice</span><span class="build-tok pb-chip human" data-pos='[null, null, null, null, [1, 1], null]'>correction added</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, null, [2, 1], null]'>reviewed in a PR</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, null, null, [0, 1]]'>under a page</span></div>
+  </div>
+  <div class="pb-steps-ui"><button class="pb-btn ghost" data-pb-prev>Prev</button><button class="pb-btn red" data-pb-play>&#9654; Play</button><button class="pb-btn ghost" data-pb-next>Next</button><span class="pb-status" data-pb-status role="status" aria-live="polite"></span></div>
+</div></div>
+<div data-pb-tabs><div role="tablist" aria-label="Play details">
+<button role="tab" id="p2-tab0" aria-controls="p2-p0" aria-selected="true">What changes</button>
+<button role="tab" id="p2-tab1" aria-controls="p2-p1" aria-selected="false" tabindex="-1">Getting started</button>
+<button role="tab" id="p2-tab2" aria-controls="p2-p2" aria-selected="false" tabindex="-1">How to run it</button>
+<button role="tab" id="p2-tab3" aria-controls="p2-p3" aria-selected="false" tabindex="-1">Governance</button>
+<button role="tab" id="p2-tab4" aria-controls="p2-p4" aria-selected="false" tabindex="-1">How to measure it</button>
+</div>
+<div role="tabpanel" id="p2-p0" aria-labelledby="p2-tab0"><div class="pb-shift"><div class="old"><h3><span class="pb-chip old">Traditional</span></h3><p>Knowledge lives in heads and wikis. A new joiner learns the conventions and the common mistakes by asking around.</p></div><div class="arrow" aria-hidden="true">&rarr;</div><div class="new"><h3><span class="pb-chip agent">AI-native</span></h3><p>Claude reads a versioned file at the start of every session. The whole team maintains it and updates it each time Claude makes a mistake.</p></div></div></div>
+<div role="tabpanel" id="p2-p1" aria-labelledby="p2-tab1" hidden><div class="pb-grid two"><div class="pb-card"><h3>Prerequisites</h3><p>None.</p></div><div class="pb-card"><h3>Infrastructure</h3><p>A repo, Claude Code installed, and one engineer who knows the codebase well.</p></div></div></div>
+<div role="tabpanel" id="p2-p2" aria-labelledby="p2-tab2" hidden><ol class="pb-list"><li><span>Run <code>/init</code> in the repo. Claude generates a starting <span class='pb-file'>CLAUDE.md</span>.</span></li><li><span>Cut it down to what a new joiner needs on day one: build, test and lint commands, the conventions that matter, and the things Claude keeps getting wrong.</span></li><li><span>Check it into Git at the repo root so the team shares one version and changes are reviewed like code.</span></li><li><span>Working rule: when Claude makes a mistake twice, the correction goes into <span class='pb-file'>CLAUDE.md</span>.</span></li><li><span>Keep it under a page. Claude reads all of it at session start, and stale content wastes context.</span></li></ol></div>
+<div role="tabpanel" id="p2-p3" aria-labelledby="p2-tab3" hidden><ul class="build-ul"><li>It is version controlled, so the agent's instructions are reviewable and auditable.</li><li>Changes are logged in Git history.</li><li>Code owners approve changes in PR review.</li><li>The engineer owns the corrections.</li></ul></div>
+<div role="tabpanel" id="p2-p4" aria-labelledby="p2-tab4" hidden><div class="pb-metric"><div><b>Leading</b><ul class="build-ul"><li>How often Claude repeats a mistake that <span class='pb-file'>CLAUDE.md</span> should have caught. Corrections are tracked in Git history.</li></ul></div><div><b>Lagging</b><ul class="build-ul"><li>Time to first merged PR for a new team member (from PR history).</li></ul></div></div></div></div>
+</article>
+  </div></section>
+  <section class="pb-section"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Play 3</span><h2>Skills as institutional knowledge</h2></div>
+    <article class="pb-play pb-reveal" id="play-3">
+<div class="pb-play-head"><div class="num">3</div><div><h3>Skills as institutional knowledge</h3><p>Rules that must apply the same way every time, owned by the people who own the policy.</p></div></div>
+<div class="build-runwrap"><h4 class="build-h">Where does this rule go?</h4>
+<p class="build-intro">Place each rule in CLAUDE.md, a skill or a hook, using the course's guidance. Write a skill for institutional knowledge that must be applied consistently. Leave the rest in CLAUDE.md or a prompt.</p><div class="build-sorter" id="build-sorter">
+  <div class="build-sort-top">
+    <div><span class="pb-file">CLAUDE.md</span><small>Context a new joiner needs: commands, conventions, architecture, common mistakes.</small></div>
+    <div><span class="pb-file">Skill</span><small>Institutional knowledge applied consistently. A control, though an advisory one.</small></div>
+    <div><span class="pb-chip gate">Hook</span><small>The deterministic layer. It blocks the action or puts the message in front of Claude.</small></div>
+  </div>
+  <div class="build-sort-card"></div>
+  <noscript><p>This sorter needs JavaScript. The three-way split above is the course's rule of thumb.</p></noscript>
+</div></div>
+<div class="build-runwrap"><h4 class="build-h">Policy owners own the skill's source</h4><div class="build-run" data-pb-steps role="group" aria-label="Skill step-through">
+  <div class="build-run-grid">
+    <ol class="build-steps-list"><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="0"><span class="build-n">1</span><span><b>One policy, one written source of truth</b> <span class="pb-chip human">Policy owner</span><span class="build-body">Pick knowledge that is enforced inconsistently today, such as a security standard, an API convention or a brand rule.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="1"><span class="build-n">2</span><span><b>Write it as a skill</b> <span class="pb-chip agent">Engineer + Claude</span><span class="build-body">A folder with a SKILL.md. The frontmatter says when it triggers. The body says what to do.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="2"><span class="build-n">3</span><span><b>Ship it with the code</b> <span class="pb-chip gate">Repo</span><span class="build-body">Put it at <code>.claude/skills/&lt;name&gt;/</code>, or distribute it org-wide through a plugin.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="3"><span class="build-n">4</span><span><b>Test that it triggers</b> <span class="pb-chip gate">Engineer</span><span class="build-body">Ask for the task in different ways.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="4"><span class="build-n">5</span><span><b>When policy changes, change the skill</b> <span class="pb-chip human">Policy owner</span><span class="build-body">The policy owner signs off. Review it like code.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="5"><span class="build-n">6</span><span><b>The next session picks it up</b> <span class="pb-chip agent">Claude</span><span class="build-body">Engineers get the new version automatically.</span></span></button></li></ol>
+    <div class="build-stage" style="--h:156px;--n:3" aria-hidden="true"><div class="build-cols"><div class="build-col" data-col="0"><span class="pb-chip human">Policy owner</span></div><div class="build-col" data-col="1"><span class="pb-chip agent">Engineer</span></div><div class="build-col" data-col="2"><span class="pb-chip gate">Repo</span></div></div><span class="build-tok pb-chip human" data-pos='[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0, "policy changed"], [0, 0, "policy source"]]'>policy source</span><span class="build-tok pb-file" data-pos='[null, [1, 0], [2, 0], [2, 0], [1, 0, "SKILL.md (updated)"], [2, 0, "SKILL.md (updated)"]]'>SKILL.md</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, [1, 1], null, null]'>does it trigger?</span><span class="build-tok pb-chip human" data-pos='[null, null, null, null, [0, 1], null]'>owner signs off</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, null, null, [2, 1]]'>next session loads it</span></div>
+  </div>
+  <div class="pb-steps-ui"><button class="pb-btn ghost" data-pb-prev>Prev</button><button class="pb-btn red" data-pb-play>&#9654; Play</button><button class="pb-btn ghost" data-pb-next>Next</button><span class="pb-status" data-pb-status role="status" aria-live="polite"></span></div>
+</div></div>
+<div data-pb-tabs><div role="tablist" aria-label="Play details">
+<button role="tab" id="p3-tab0" aria-controls="p3-p0" aria-selected="true">What changes</button>
+<button role="tab" id="p3-tab1" aria-controls="p3-p1" aria-selected="false" tabindex="-1">Getting started</button>
+<button role="tab" id="p3-tab2" aria-controls="p3-p2" aria-selected="false" tabindex="-1">How to run it</button>
+<button role="tab" id="p3-tab3" aria-controls="p3-p3" aria-selected="false" tabindex="-1">Governance</button>
+<button role="tab" id="p3-tab4" aria-controls="p3-p4" aria-selected="false" tabindex="-1">How to measure it</button>
+</div>
+<div role="tabpanel" id="p3-p0" aria-labelledby="p3-tab0"><div class="pb-shift"><div class="old"><h3><span class="pb-chip old">Traditional</span></h3><p>Standards live in documents and in a few experienced heads. They are applied inconsistently, and violations show up late, in review.</p></div><div class="arrow" aria-hidden="true">&rarr;</div><div class="new"><h3><span class="pb-chip agent">AI-native</span></h3><p>The instructions are explicit, version controlled, applied broadly, and updated centrally when policy changes. A skill carries the knowledge. A hook backs the rules that must always hold.</p></div></div></div>
+<div role="tabpanel" id="p3-p1" aria-labelledby="p3-tab1" hidden><div class="pb-grid two"><div class="pb-card"><h3>Prerequisites</h3><p>None required. <span class='pb-file'>CLAUDE.md</span> helps, but a skill does not depend on it.</p></div><div class="pb-card"><h3>Infrastructure</h3><p>One policy with a named owner and a written source of truth.</p></div></div></div>
+<div role="tabpanel" id="p3-p2" aria-labelledby="p3-tab2" hidden><ol class="pb-list"><li><span>Pick one piece of knowledge that is enforced inconsistently today: a security standard, an API design convention or a brand rule.</span></li><li><span>Write it as a skill: a folder with a <span class='pb-file'>SKILL.md</span> whose frontmatter says when it triggers and whose body says what to do. An engineer writes it from the policy owner's source of truth, using Claude to help.</span></li><li><span>Put it at <code>.claude/skills/&lt;name&gt;/</code> so it ships with the code, or distribute it org-wide through a plugin.</span></li><li><span>Test that it triggers by asking for the task in different ways.</span></li><li><span>When policy changes, change the skill. The policy owner signs off.</span></li><li><span>Engineers pick up the new version automatically in their next session.</span></li></ol><div class="build-example"><b>Example <span class="pb-file">secure-api-review</span> skill</b>
+ <p>Use it when creating or changing external-facing endpoints. Four rules: authentication, input validation, audit events, and data classification (pii never in logs or errors). Then run <code>scripts/check-endpoints.sh</code> and include its output in the summary.</p></div></div>
+<div role="tabpanel" id="p3-p3" aria-labelledby="p3-tab3" hidden><ul class="build-ul"><li>A skill is a control, though an advisory one. Nothing forces a session to comply.</li><li>A policy that must always hold needs something deterministic behind it: a hook that blocks the action, or a review pass at the PR.</li><li>The hook catches the violation at the edit. The same check on the PR catches anything that reached the branch another way.</li><li>Skill invocations are logged in session traces.</li><li>Policy owners own the source of truth for each skill and sign off changes. Skill changes are reviewed like code.</li></ul></div>
+<div role="tabpanel" id="p3-p4" aria-labelledby="p3-tab4" hidden><div class="pb-metric"><div><b>Leading</b><ul class="build-ul"><li>Time from the policy owner approving a change to the updated skill merging (a PR on the skill folder).</li></ul></div><div><b>Lagging</b><ul class="build-ul"><li>PR review findings that cite the policy. They should fall toward zero. If they do not, the skill is not triggering or its text has drifted from policy.</li></ul></div></div></div></div>
+<div class="build-extra pb-reveal">
+  <div class="build-extra-head"><span class="pb-chip gate">Hooks</span><h4>Hooks as build-time guardrails</h4></div>
+  <p>A skill is advisory. The course says the skill makes violations rare and the hook makes them close to impossible. Most Claude actions in build are file edits and shell commands, so hooks fire most often here.</p>
+  <div class="pb-grid four">
+    <div class="pb-card gate"><h4>Block</h4><p>Edits to protected paths, such as generated classes or a frozen package.</p></div>
+    <div class="pb-card gate"><h4>Tidy</h4><p>Run the formatter and linter after edits.</p></div>
+    <div class="pb-card gate"><h4>Protect</h4><p>Keep credentials out of the diff.</p></div>
+    <div class="pb-card gate"><h4>Back a skill</h4><p>Back any skill whose policy must hold without exception.</p></div>
+  </div>
+  <h4 class="build-h">Worked example: the API policy hook</h4>
+  <div class="build-run" data-pb-steps role="group" aria-label="Hook step-through">
+  <div class="build-run-grid">
+    <ol class="build-steps-list"><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="0"><span class="build-n">1</span><span><b>Claude edits a route file</b> <span class="pb-chip agent">Claude</span><span class="build-body">An edit in <code>claims-api/routes/</code> matches the <code>Edit|Write</code> matcher.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="1"><span class="build-n">2</span><span><b>A PostToolUse hook fires</b> <span class="pb-chip gate">Hook</span><span class="build-body">Registered in <code>.claude/settings.json</code>. It runs <code>api-policy.sh</code>.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="2"><span class="build-n">3</span><span><b>The script runs the same check as the skill</b> <span class="pb-chip gate">Hook</span><span class="build-body"><code>check-endpoints.sh</code>, only for files in the routes folder.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="3"><span class="build-n">4</span><span><b>Exit code 2 puts the message in front of Claude</b> <span class="pb-chip gate">Hook</span><span class="build-body">The message names the rule and the file and line: rule 4, a pii field reaches a log or an error message.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="4"><span class="build-n">5</span><span><b>Claude fixes the line</b> <span class="pb-chip agent">Claude</span><span class="build-body">A post-edit hook cannot undo the edit. It tells Claude what to fix.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="5"><span class="build-n">6</span><span><b>The same script is a required CI check</b> <span class="pb-chip gate">CI</span><span class="build-body">An Edit or Write hook misses a shell command that rewrites the file. A required check on every pull request catches it.</span></span></button></li></ol>
+    <div class="build-stage" style="--h:208px;--n:3" aria-hidden="true"><div class="build-cols"><div class="build-col" data-col="0"><span class="pb-chip agent">Claude</span></div><div class="build-col" data-col="1"><span class="pb-chip gate">Hook</span></div><div class="build-col" data-col="2"><span class="pb-chip gate">CI</span></div></div><span class="build-tok pb-file" data-pos='[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0, "routes file (fixed)"], [2, 0, "shell rewrite"]]'>routes file</span><span class="build-tok pb-chip gate" data-pos='[null, [1, 0], [1, 0], [1, 0], null, null]'>api-policy.sh</span><span class="build-tok pb-chip gate" data-pos='[null, null, [1, 1], [1, 1], null, [2, 1, "same check, required"]]'>check-endpoints.sh</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, [0, 1], null, null]'>exit 2: rule 4, pii in a log</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, null, [0, 2], null]'>fix the line</span></div>
+  </div>
+  <div class="pb-steps-ui"><button class="pb-btn ghost" data-pb-prev>Prev</button><button class="pb-btn red" data-pb-play>&#9654; Play</button><button class="pb-btn ghost" data-pb-next>Next</button><span class="pb-status" data-pb-status role="status" aria-live="polite"></span></div>
+</div>
+  <ul class="build-ul">
+    <li>Hooks run on every matching action. Keep them fast and scoped to the changed file. Heavier checks, such as the full test suite, belong at commit or PR.</li>
+    <li>A hook that asks a human for approval belongs in Stage 5. In build it puts a person back on the critical path of every parallel session.</li>
+  </ul>
+</div>
+</article>
+  </div></section>
+  <section class="pb-section soft"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Play 4</span><h2>Parallel sessions and subagents</h2></div>
+    <article class="pb-play pb-reveal" id="play-4">
+<div class="pb-play-head"><div class="num">4</div><div><h3>Parallel sessions and subagents</h3><p>More tasks in flight. Subagents keep each session focused. You steer and review all of it.</p></div></div>
+<div class="build-runwrap"><h4 class="build-h">Watch it run</h4><div class="build-run" data-pb-steps role="group" aria-label="Parallel sessions step-through">
+  <div class="build-run-grid">
+    <ol class="build-steps-list"><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="0"><span class="build-n">1</span><span><b>Split the work using plan.md</b> <span class="pb-chip human">You</span><span class="build-body">Tasks that touch different files can run in parallel. Tasks that share files run in one session, one after another.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="1"><span class="build-n">2</span><span><b>Two sessions, one worktree each</b> <span class="pb-chip agent">Claude</span><span class="build-body">For example <code>claude --worktree feature-auth</code> and <code>claude --worktree fix-rate-limit</code>. A worktree is a separate checkout on its own branch.</span></span></button></li><li class="pb-step" data-hl="1"><button class="build-stepbtn" data-pb-goto="2"><span class="build-n">3</span><span><b>A third session, if review can keep up</b> <span class="pb-chip agent">Claude</span><span class="build-body">Start with two or three. The ceiling is how many streams one person can review properly.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="3"><span class="build-n">4</span><span><b>Repeated jobs go to subagents</b> <span class="pb-chip agent">Subagents</span><span class="build-body">A subagent is a scoped helper inside one session, with its own context window and tool limits. A verifier is one example.</span></span></button></li><li class="pb-step" data-hl="2"><button class="build-stepbtn" data-pb-goto="4"><span class="build-n">5</span><span><b>The verifier reports and fixes nothing</b> <span class="pb-chip agent">Subagents</span><span class="build-body">It runs the app, exercises the change, and reports what it saw and any mismatch with plan.md.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="5"><span class="build-n">6</span><span><b>You steer and review every stream</b> <span class="pb-chip human">You</span><span class="build-body">Sessions know nothing about each other. You are the only thing they share.</span></span></button></li><li class="pb-step" data-hl="0"><button class="build-stepbtn" data-pb-goto="6"><span class="build-n">7</span><span><b>Add sessions only while review keeps up</b> <span class="pb-chip gate">Gate</span><span class="build-body">If review falls behind, stop adding.</span></span></button></li></ol>
+    <div class="build-stage" style="--h:260px;--n:3" aria-hidden="true"><div class="build-cols"><div class="build-col" data-col="0"><span class="pb-chip human">You</span></div><div class="build-col" data-col="1"><span class="pb-chip agent">Sessions</span></div><div class="build-col" data-col="2"><span class="pb-chip agent">Subagents</span></div></div><span class="build-tok pb-file" data-pos='[[0, 0], null, null, null, null, null, null]'>plan.md</span><span class="build-tok pb-chip human" data-pos='[[0, 1], null, null, null, null, null, null]'>tasks touch different files</span><span class="build-tok pb-chip agent" data-pos='[null, [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]]'>feature-auth</span><span class="build-tok pb-chip agent" data-pos='[null, [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]]'>fix-rate-limit</span><span class="build-tok pb-chip agent" data-pos='[null, null, [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]'>third session</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, [2, 0], [2, 0, "verifier: report only"], [2, 0, "verifier: report only"], [2, 0, "verifier: report only"]]'>verifier</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, [2, 1], [2, 1, "verifier: report only"], [2, 1, "verifier: report only"], [2, 1, "verifier: report only"]]'>verifier</span><span class="build-tok pb-chip agent" data-pos='[null, null, null, [2, 2], [2, 2, "verifier: report only"], [2, 2, "verifier: report only"], [2, 2, "verifier: report only"]]'>verifier</span><span class="build-tok pb-file" data-pos='[null, null, null, null, null, [0, 0], [0, 0]]'>diff</span><span class="build-tok pb-file" data-pos='[null, null, null, null, null, [0, 1], [0, 1]]'>diff</span><span class="build-tok pb-file" data-pos='[null, null, null, null, null, [0, 2], [0, 2]]'>diff</span><span class="build-tok pb-chip gate" data-pos='[null, null, null, null, null, null, [0, 3]]'>is review keeping up?</span></div>
+  </div>
+  <div class="pb-steps-ui"><button class="pb-btn ghost" data-pb-prev>Prev</button><button class="pb-btn red" data-pb-play>&#9654; Play</button><button class="pb-btn ghost" data-pb-next>Next</button><span class="pb-status" data-pb-status role="status" aria-live="polite"></span></div>
+</div></div>
+<div data-pb-tabs><div role="tablist" aria-label="Play details">
+<button role="tab" id="p4-tab0" aria-controls="p4-p0" aria-selected="true">What changes</button>
+<button role="tab" id="p4-tab1" aria-controls="p4-p1" aria-selected="false" tabindex="-1">Getting started</button>
+<button role="tab" id="p4-tab2" aria-controls="p4-p2" aria-selected="false" tabindex="-1">How to run it</button>
+<button role="tab" id="p4-tab3" aria-controls="p4-p3" aria-selected="false" tabindex="-1">Governance</button>
+<button role="tab" id="p4-tab4" aria-controls="p4-p4" aria-selected="false" tabindex="-1">How to measure it</button>
+</div>
+<div role="tabpanel" id="p4-p0" aria-labelledby="p4-tab0"><div class="pb-shift"><div class="old"><h3><span class="pb-chip old">Traditional</span></h3><p>One engineer, one task at a time, with a lot of time spent on builds, tests and reviews. Switching tasks while waiting is tiring enough that few people choose to.</p></div><div class="arrow" aria-hidden="true">&rarr;</div><div class="new"><h3><span class="pb-chip agent">AI-native</span></h3><p>One engineer runs several sessions at once, each in its own worktree. Repeated jobs become subagents. The job shifts to orchestrating, and eventually to building and monitoring loops.</p></div></div></div>
+<div role="tabpanel" id="p4-p1" aria-labelledby="p4-tab1" hidden><div class="pb-grid two"><div class="pb-card"><h3>Prerequisites</h3><p><span class='pb-file'>CLAUDE.md</span>, because all sessions read it.</p><p>The Stage 4 feedback loop also helps. A session needs less supervision when it can verify its own work.</p></div><div class="pb-card"><h3>Infrastructure</h3><p>A Git repo. Isolation comes from worktrees.</p><p>Permission settings tuned so sessions are not stuck on approval prompts for commands the org considers safe.</p></div></div></div>
+<div role="tabpanel" id="p4-p2" aria-labelledby="p4-tab2" hidden><ol class="pb-list"><li><span>Split work into tasks that touch different files, using the plan from plan mode to find independence. Tasks that share files run in one session, in order.</span></li><li><span>Give each parallel task its own worktree, in separate terminals.</span></li><li><span>Start with two or three sessions. Add sessions only while review is keeping up.</span></li><li><span>Turn repeated jobs into subagents: Markdown files in <code>.claude/agents/</code> with a name, a description of when to use it, and allowed tools. Check them into Git.</span></li></ol><div class="build-example"><b>Example <span class="pb-file">verifier</span> subagent</b>
+ <p>Description: runs the app and checks the change works before the session reports done. Tools: Bash and Read. It starts the app, exercises the changed behavior and the two nearest neighboring flows, and reports what it ran and saw, including anything that differs from <span class="pb-file">plan.md</span>. It does not fix anything.</p>
+ <p class="build-small">Other examples: a code simplifier and a researcher.</p></div></div>
+<div role="tabpanel" id="p4-p3" aria-labelledby="p4-tab3" hidden><ul class="build-ul"><li>More sessions mean more output, so controls come from repo configuration.</li><li>Hooks and permission settings in the repo apply to all sessions.</li><li>Activity is logged and attributed to the engineer who ran it.</li></ul></div>
+<div role="tabpanel" id="p4-p4" aria-labelledby="p4-tab4" hidden><div class="pb-metric"><div><b>Leading</b><ul class="build-ul"><li>Concurrent sessions per engineer while review quality holds (counted from the OpenTelemetry export).</li><li>Share of the day spent steering rather than waiting.</li></ul></div><div><b>Lagging</b><ul class="build-ul"><li>Changes merged per engineer per week, read alongside the rework rate (PR history).</li></ul></div></div></div></div>
+</article>
+  </div></section>
+
+  <section class="pb-section"><div class="pb-wrap">
+    <div class="pb-head pb-reveal"><span class="pb-kicker">Hand-off</span><h2>What Build hands to Stage 4</h2></div>
+    <div class="build-hand pb-reveal">
+      <div class="build-hbox"><small>In</small><span class="pb-file">spec.md</span><p>An approved spec triggers plan mode.</p></div>
+      <div class="build-harrow" aria-hidden="true"><i></i></div>
+      <div class="build-hbox"><small>Stage 3: Build</small><span class="pb-file">plan.md</span><p>Committed, so later stages can check against it.</p></div>
+      <div class="build-harrow" aria-hidden="true"><i></i></div>
+      <div class="build-hbox out"><small>Out</small><span class="pb-file">the diff + its tests</span><p>Stage 4 begins by reading them.</p></div>
+    </div>
+    <p style="margin-top:20px"><a class="pb-btn red" href="{{BP}}/test/">Next: Stage 4, Test</a></p>
+  </div></section>
+
+  <section class="pb-section soft"><div class="pb-wrap">
+    <div class="pb-takeaways pb-reveal"><h3>Key takeaways</h3><ul>
+      <li>Start in plan mode. Claude reads, you correct the plan, then Claude implements. The approved <code>plan.md</code> joins the audit trail.</li>
+      <li>Keep <code>CLAUDE.md</code> short and shared. When Claude makes a mistake twice, the correction goes in.</li>
+      <li>A skill is advisory. Back any rule that must always hold with a hook and a check on the PR.</li>
+      <li>Start with two or three parallel sessions. Add more only while review keeps up.</li>
+      <li>With legacy systems, link first, then name one source of truth for each artifact.</li>
+    </ul></div>
+  </div></section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  /* Step-through stages: tokens move to the position listed for the current step. */
+  function applyStage(root, i) {
+    var stage = root.querySelector('.build-stage');
+    if (!stage) return;
+    var n = +getComputedStyle(stage).getPropertyValue('--n') || 3;
+    [].forEach.call(stage.querySelectorAll('.build-tok'), function (t) {
+      var map = t.__map || (t.__map = JSON.parse(t.getAttribute('data-pos')));
+      if (!t.__label) t.__label = t.textContent;
+      var p = map[i];
+      if (!p) { t.classList.remove('show'); return; }
+      t.style.left = 'calc(' + (p[0] * 100 / n) + '% + 6px)';
+      t.style.top = (44 + p[1] * 52) + 'px';
+      t.textContent = p[2] || t.__label;
+      t.classList.add('show');
+    });
+    var hl = root.querySelectorAll('.pb-step')[i];
+    var col = hl ? +hl.getAttribute('data-hl') : -1;
+    [].forEach.call(stage.querySelectorAll('.build-col'), function (c, j) { c.classList.toggle('hl', j === col); });
+  }
+  [].forEach.call(document.querySelectorAll('[data-pb-steps]'), function (root) {
+    root.addEventListener('pb:step', function (e) { applyStage(root, e.detail); });
+    if (root.hasAttribute('data-step')) applyStage(root, +root.getAttribute('data-step'));
+    root.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var b = root.querySelector(e.key === 'ArrowRight' ? '[data-pb-next]' : '[data-pb-prev]');
+      if (b && !b.disabled) { e.preventDefault(); b.click(); }
+    });
+  });
+
+  /* Play picker: mark the play in view. */
+  var links = [].slice.call(document.querySelectorAll('.build-picker a'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var id = e.target.id.replace('play-', '');
+        links.forEach(function (a) { a.setAttribute('aria-current', a.getAttribute('data-play') === id ? 'true' : 'false'); });
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    [].forEach.call(document.querySelectorAll('.pb-play'), function (p) { io.observe(p); });
+  }
+
+  /* Sorter: CLAUDE.md vs skill vs hook, using only the course's guidance. */
+  var RULES = [
+    { t: 'Run make test before you push. make run starts the portal on :3000.', a: 'claude', why: 'Build, test and lint commands are the first thing a new joiner needs on day one. They belong in CLAUDE.md.' },
+    { t: 'Every external-facing endpoint requires the gateway JWT. No anonymous routes outside /health.', a: 'skill', why: 'This is institutional knowledge that must be applied consistently. The course writes it as the authentication rule of a skill.' },
+    { t: 'Never edit generated classes or a frozen package.', a: 'hook', why: 'Build-phase hooks can block edits to protected paths. A hook is deterministic, so the edit does not go through.' },
+    { t: 'claims-core allows 50 requests per second. Cache reads and never poll it.', a: 'claude', why: 'Architecture and the limits Claude needs to know sit in CLAUDE.md.' },
+    { t: 'A pii field must never reach a log or an error message, with no exceptions.', a: 'hook', why: 'A policy that must always hold needs something deterministic behind it. The skill makes violations rare. The hook makes them close to impossible.' },
+    { t: 'Apply the brand rule the same way on every team.', a: 'skill', why: 'A brand rule is one of the course\'s examples of knowledge enforced inconsistently. Write it as a skill, with the policy owner\'s source of truth behind it.' },
+    { t: 'Do not bump dependency versions. The platform team owns them.', a: 'claude', why: 'This is one of the things Claude gets wrong. The course keeps those in CLAUDE.md.' },
+    { t: 'Run the formatter and linter after every edit.', a: 'hook', why: 'Build-phase hooks can run the formatter and linter after edits. Keep them fast and scoped to the changed file.' }
+  ];
+  var NAMES = { claude: 'CLAUDE.md', skill: 'Skill', hook: 'Hook' };
+  var host = document.querySelector('#build-sorter .build-sort-card');
+  if (host) {
+    var idx = 0, score = 0;
+    var render = function () {
+      if (idx >= RULES.length) {
+        host.innerHTML = '<div class="build-sort-count">Done</div><div class="build-score">' + score + ' of ' + RULES.length + ' placed as the course would</div>' +
+          '<p>Rule of thumb: CLAUDE.md for the context a new joiner needs. A skill for institutional knowledge applied consistently. A hook behind any rule that must always hold.</p>' +
+          '<div class="build-verdict"><button class="pb-btn" type="button" data-restart>Start again</button></div>';
+        var r = host.querySelector('[data-restart]');
+        r.addEventListener('click', function () { idx = 0; score = 0; render(); });
+        r.focus({ preventScroll: true });
+        return;
+      }
+      var rule = RULES[idx];
+      host.innerHTML = '<div class="build-sort-count">Rule ' + (idx + 1) + ' of ' + RULES.length + '</div>' +
+        '<div class="build-rule"></div>' +
+        '<div class="build-choices" role="group" aria-label="Where does this rule go?">' +
+        ['claude', 'skill', 'hook'].map(function (k) { return '<button class="build-choice" type="button" data-k="' + k + '">' + NAMES[k] + '</button>'; }).join('') +
+        '</div><div class="build-out" aria-live="polite"></div>';
+      host.querySelector('.build-rule').textContent = rule.t;
+      [].forEach.call(host.querySelectorAll('.build-choice'), function (b) {
+        b.addEventListener('click', function () { answer(b.getAttribute('data-k')); });
+      });
+    };
+    var answer = function (k) {
+      var rule = RULES[idx], ok = k === rule.a;
+      if (ok) score++;
+      [].forEach.call(host.querySelectorAll('.build-choice'), function (b) {
+        var bk = b.getAttribute('data-k');
+        b.disabled = true;
+        if (bk === rule.a) b.classList.add('right');
+        else if (bk === k) b.classList.add('wrong');
+      });
+      var out = host.querySelector('.build-out');
+      out.innerHTML = '<div class="build-verdict"><p><b>' + (ok ? 'Yes. ' : 'Not quite. ') + 'It goes in ' + NAMES[rule.a] + '.</b> ' + rule.why + '</p>' +
+        '<button class="pb-btn" type="button" data-next>' + (idx === RULES.length - 1 ? 'See result' : 'Next rule') + '</button></div>';
+      var nx = out.querySelector('[data-next]');
+      nx.addEventListener('click', function () { idx++; render(); var f = host.querySelector('.build-choice, [data-restart]'); if (f) f.focus({ preventScroll: true }); });
+      nx.focus({ preventScroll: true });
+    };
+    render();
+  }
+})();
+</script>
+</body>
+</html>

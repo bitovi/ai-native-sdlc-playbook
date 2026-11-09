@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 6: Maintain | Bitovi</title>
+<meta name="description" content="Agents watch production, and a breached control band becomes the next intent.md.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+.mt-chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.mt-two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 26px; }
+.mt-chartbox { background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 18px 18px 8px; }
+.mt-chartbox h3 { font-size: 16px; margin-bottom: 2px; }
+.mt-chartbox .sub { font-size: 14px; color: var(--pb-muted); }
+.mt-svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+.mt-grid { stroke: var(--pb-line); stroke-width: 1; }
+.mt-mean { stroke: var(--pb-muted); stroke-width: 1.5; stroke-dasharray: 2 4; }
+.mt-win { fill: var(--pb-soft); }
+.mt-winlabel, .mt-lab { font-family: var(--pb-display); font-size: 12px; fill: var(--pb-muted); font-weight: 600; }
+.mt-band { stroke-width: 1.5; stroke-dasharray: 6 5; opacity: 0; transition: opacity .5s var(--pb-ease), stroke-width .3s; }
+.mt-b1 { stroke: #eab308; } .mt-b2 { stroke: var(--pb-gate); } .mt-b3 { stroke: var(--pb-human); }
+.mt-zone { opacity: 0; transition: opacity .6s var(--pb-ease); }
+.mt-z1 { fill: #fef9c3; } .mt-z2 { fill: var(--pb-gate-bg); } .mt-z3 { fill: var(--pb-human-bg); }
+.mt-bl { opacity: 0; transition: opacity .5s var(--pb-ease) .1s; }
+.mt-s-bands .mt-band, .mt-s-bands .mt-bl { opacity: 1; }
+.mt-s-bands .mt-zone { opacity: .6; }
+.mt-line { fill: none; stroke: var(--pb-ink); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.mt-base { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--pb-ease); }
+.mt-drawn .mt-base { stroke-dashoffset: 0; }
+.mt-tail { stroke: var(--pb-human); stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .7s var(--pb-ease); }
+.mt-s-breach .mt-tail { stroke-dashoffset: 0; }
+.mt-rel { stroke: var(--pb-muted); stroke-width: 1.5; stroke-dasharray: 3 3; opacity: 0; transition: opacity .4s; }
+.mt-rellab { opacity: 0; transition: opacity .4s; }
+.mt-s-breach .mt-rel, .mt-s-breach .mt-rellab { opacity: 1; }
+.mt-dot { fill: var(--pb-human); stroke: #fff; stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.mt-s-breach .mt-dot { opacity: 1; animation: pb-pop .5s var(--pb-ease) .55s both; }
+.mt-s-act .mt-b3 { stroke-width: 3.5; stroke-dasharray: none; }
+.mt-alert { opacity: 0; transition: opacity .4s .8s; }
+.mt-s-breach .mt-alert { opacity: 1; }
+.mt-alert text { font-family: var(--pb-display); font-size: 12px; font-weight: 700; fill: var(--pb-human); }
+
+.mt-stage { display: grid; }
+.mt-pane { grid-area: 1 / 1; visibility: hidden; opacity: 0; transform: translateY(10px); transition: opacity .4s var(--pb-ease), transform .4s var(--pb-ease), visibility 0s .4s; background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 22px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.mt-pane.on { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+.mt-pane h3 { font-size: 19px; }
+.mt-pane p { font-size: 16px; }
+.mt-pane > * { max-width: 100%; }
+.mt-tier { align-self: stretch; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--pb-soft); border: 2px solid transparent; }
+.mt-tier b { font-family: var(--pb-display); font-size: 16px; }
+.mt-tier span { font-size: 15px; line-height: 1.4; }
+.mt-tier.hit { background: var(--pb-human-bg); border-color: var(--pb-human); }
+.mt-doc { align-self: stretch; border: 1.5px solid var(--pb-file); border-radius: 12px; overflow: hidden; background: #fff; }
+.mt-doc header { background: var(--pb-file-bg); padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--pb-file); font-weight: 700; }
+.mt-doc ul { list-style: none; margin: 0; padding: 8px 12px 10px; display: grid; gap: 4px; font-size: 14.5px; line-height: 1.4; }
+.mt-doc li { opacity: 0; transform: translateX(-8px); transition: opacity .35s var(--pb-ease), transform .35s var(--pb-ease); }
+.mt-doc li b { font-family: var(--pb-display); font-size: 13px; color: var(--pb-ink); }
+.mt-pane.on .mt-doc li { opacity: 1; transform: none; }
+.mt-pane.on .mt-doc li:nth-child(2) { transition-delay: .15s; } .mt-pane.on .mt-doc li:nth-child(3) { transition-delay: .3s; } .mt-pane.on .mt-doc li:nth-child(4) { transition-delay: .45s; } .mt-pane.on .mt-doc li:nth-child(5) { transition-delay: .6s; }
+.mt-route { align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mt-route div { border-radius: 12px; padding: 10px; background: var(--pb-soft); text-align: center; font-family: var(--pb-display); font-weight: 700; font-size: 14px; color: var(--pb-ink); display: grid; gap: 4px; }
+.mt-route small { font-family: var(--pb-text); font-weight: 400; font-size: 13px; color: var(--pb-muted); }
+.mt-code { align-self: stretch; font-family: var(--pb-mono); font-size: 13px; background: var(--pb-ink); color: #e2e8f0; border-radius: 12px; padding: 12px 14px; line-height: 1.55; overflow-x: auto; white-space: pre; }
+.mt-flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mt-flow .ar { color: var(--pb-muted); }
+
+.mt-steps { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; counter-reset: mt; }
+.mt-steps .pb-step { counter-increment: mt; }
+.mt-steps button { width: 100%; height: 100%; text-align: left; font: inherit; font-size: 13.5px; line-height: 1.3; padding: 10px; border-radius: 12px; border: 1.5px solid var(--pb-line); background: #fff; color: var(--pb-ink); cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+.mt-steps button::before { content: counter(mt); width: 22px; height: 22px; border-radius: 50%; background: var(--pb-ink); color: #fff; display: grid; place-items: center; font-family: var(--pb-display); font-size: 12px; font-weight: 700; }
+.mt-steps .on button { border-color: var(--pb-red); box-shadow: var(--pb-shadow); }
+.mt-steps .on button::before { background: var(--pb-red); }
+
+.mt-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mt-tag { align-self: flex-start; }
+.mt-cards ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.mt-hand { display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); align-items: stretch; }
+.mt-hand > div:not(.arrow) { background: #fff; border-radius: var(--pb-radius); box-shadow: var(--pb-shadow); padding: 24px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.mt-hand h3 { font-size: 18px; }
+.mt-hand .arrow { display: grid; place-items: center; font-size: 28px; color: var(--pb-agent); }
+.mt-end { text-align: center; }
+.mt-end p { color: #cbd5e1; max-width: 36em; margin: 14px auto 0; font-size: 19px; }
+.mt-end .acts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+.mt-end .pb-btn.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+@media (max-width: 960px) {
+  .mt-two { grid-template-columns: 1fr; }
+  .mt-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .mt-cards, .mt-hand { grid-template-columns: 1fr; }
+  .mt-hand .arrow { transform: rotate(90deg); height: 40px; }
+  .mt-route { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 6: Maintain</h1>
+        <p class="lead">Agents watch production, and a breached control band becomes the next intent.md.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The shift</span>
+        <h2>People stop being the ones who start the work</h2>
+        <p class="pb-lede">Every earlier stage needs a person to start it. In Stage 6 a trigger starts Claude, and people triage and review what comes back.</p>
+        <div class="pb-legend">
+          <span class="pb-chip old">Traditional</span><span class="pb-chip agent">Claude or an agent</span><span class="pb-chip human">A person</span><span class="pb-chip gate">A gate or control</span><span class="pb-file">intent.md</span>
+        </div>
+      </div>
+      <div class="pb-shift pb-reveal d1">
+        <div class="old">
+          <span class="pb-chip old">Traditional</span>
+          <h3 style="margin-top:10px">Humans watch production</h3>
+          <p>Maintenance is reactive. An alert at 3 a.m. can be missed. Tickets sit in the backlog. Post-mortem actions may never reach the codebase.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div class="new">
+          <span class="pb-chip agent">AI-native</span>
+          <h3 style="margin-top:10px">Agents monitor live deployments</h3>
+          <p>A control-band breach, a ticket, a channel message or a schedule invokes Claude. It diagnoses, acts only through gated routes, and writes what it found as a new <span class="pb-file">intent.md</span>. The work flows back through the stages.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The play</span>
+        <h2>One play: closing the loop on metrics</h2>
+        <p class="pb-lede">Stage 6 runs without a person in the path, with an independent confidence gate between steps. The gate is a deterministic check or a second, adversarial reviewing agent. It decides whether work continues or goes to a human.</p>
+      </div>
+      <div class="pb-play pb-reveal d1" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">6</div>
+          <div>
+            <h3>Closing the loop on metrics</h3>
+            <p>A watched metric leaves its normal range. An agent investigates and writes the next intent.md.</p>
+            <div class="mt-chip-row"><span class="pb-chip human">Service owner or on-call</span><span class="pb-chip agent">Monitoring agent</span><span class="pb-chip gate">Control bands</span></div>
+          </div>
+        </div>
+        <div role="tablist" aria-label="The five parts of the play">
+          <button role="tab" id="mt-t1" aria-controls="mt-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="mt-t2" aria-controls="mt-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="mt-t3" aria-controls="mt-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="mt-t4" aria-controls="mt-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="mt-t5" aria-controls="mt-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="mt-p1" aria-labelledby="mt-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old" style="align-self:flex-start">Traditional</span><p>People watch dashboards and respond to alerts. Fixes start when someone notices.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent" style="align-self:flex-start">AI-native</span><p>A script watches the metric. A breach invokes Claude. People triage the queue and no longer have to start the work.</p></div>
+          </div>
+          <p style="margin-top:16px">A <b>control band</b> is a range around a metric's normal level. The script takes the baseline as the mean of the last 30 days of hourly readings. It also computes sigma (&sigma;), the standard deviation. The 1&sigma; band ends at the mean plus one sigma, 2&sigma; at the mean plus two, and so on.</p>
+          <p style="margin-top:10px">Detection stays deterministic. No model is involved in deciding that a band was breached.</p>
+        </div>
+        <div role="tabpanel" id="mt-p2" aria-labelledby="mt-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3>
+              <ul class="pb-list" style="margin-top:6px"><li>A structured <span class="pb-file">intent.md</span> to restart the loop</li><li>Claude-accelerated PR reviews</li><li>Hooks as an action boundary</li><li>A rollback path in CI/CD, used by the highest autonomy tier</li></ul></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul class="pb-list" style="margin-top:6px"><li>A metrics store the script can query, such as Prometheus or a CI system API</li><li>Read access to the repo</li><li>A way to run Claude Code non-interactively in CI, or the Agent SDK for a service that receives webhooks</li></ul></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="mt-p3" aria-labelledby="mt-t3" hidden>
+          <ol class="pb-list">
+            <li><span><span class="pb-chip human">Service owner or platform engineer</span> picks one metric with a stable rolling baseline, such as CI test failure rate, post-deploy 5xx rate or PR cycle time.</span></li>
+            <li><span>Write the detection script: a rolling mean and sigma, plus rules that catch slow drift as well as spikes. Keep it in version control and unit test it.</span></li>
+            <li><span>Define the response tiers in version-controlled config (<span class="pb-file">bands.yaml</span>). 1&sigma; logs. 2&sigma; diagnoses read-only. 3&sigma; may act, only by opening a PR or triggering a pre-approved runbook.</span></li>
+            <li><span>Choose the trigger: a scheduled workflow, a webhook from existing monitoring, or a cron job. Claude runs stateless, as a non-interactive CI step or an Agent SDK service in a sandbox.</span></li>
+            <li><span><span class="pb-chip agent">The agent</span> writes its diagnosis as <span class="pb-file">intent.md</span> in the Stage 1 format.</span></li>
+            <li><span><span class="pb-chip human">Service owner or on-call</span> triages the queue: fix now, schedule or dismiss. Product-facing findings go to the product owner.</span></li>
+            <li><span>When a fix ships, add an eval for the incident.</span></li>
+          </ol>
+          <p style="margin-top:16px">Watch it run in the step-through below. The same setup works for other metrics. A 3&sigma; CI failure rate can quarantine a flaky test or open a revert PR. A PR cycle time drift can produce a report for engineering leadership.</p>
+        </div>
+        <div role="tabpanel" id="mt-p4" aria-labelledby="mt-t4" hidden>
+          <div class="pb-grid">
+            <div class="pb-card gate"><h3>Bands live in config</h3><p>Tier boundaries are enforced from version-controlled config. Permissions and managed settings deny production access.</p></div>
+            <div class="pb-card human"><h3>People approve</h3><p>A service owner triages and approves findings. Changes go through the normal PR gate. Runbooks the agent may trigger are approved in advance.</p></div>
+            <div class="pb-card file"><h3>Everything is logged</h3><p>Invocations, findings and triage decisions are timestamped.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="mt-p5" aria-labelledby="mt-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>Time from band breach to an intent.md in the triage queue, compared with the old time from incident to post-mortem action. The script's log holds the breach time and tier.</div>
+            <div><b>Lagging</b>The share of findings that become merged fixes, and repeat incidents of the same class. Repeats should fall as the evals grow.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Step through it</span>
+        <h2>From a steady metric to the next intent.md</h2>
+        <p class="pb-lede">Start with one metric that has a stable baseline. Press Play, or use Next to go at your own pace.</p>
+      </div>
+      <div data-pb-steps id="mt-run" class="pb-reveal d1">
+        <div class="pb-steps-ui">
+          <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+          <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+          <button class="pb-btn" data-pb-next>Next &rarr;</button>
+          <span class="pb-status" data-pb-status aria-live="polite"></span>
+        </div>
+        <div class="mt-two">
+          <div class="mt-chartbox">
+            <h3>One production metric, for example the 5xx rate on one endpoint</h3>
+            <p class="sub">The grey block is the 30-day rolling baseline of hourly readings.</p>
+            <svg id="mt-svg" class="mt-svg" viewBox="0 0 700 270" role="img" aria-label="A line chart of one metric that stays near its 30-day average. Dashed bands mark 1, 2 and 3 sigma above the average. After a release the newest reading jumps above the 3 sigma band.">
+              <rect class="mt-zone mt-z1" x="40" y="148" width="580" height="26"/>
+              <rect class="mt-zone mt-z2" x="40" y="122" width="580" height="26"/>
+              <rect class="mt-zone mt-z3" x="40" y="60" width="580" height="62"/>
+              <rect class="mt-win" x="40" y="40" width="531" height="200" opacity=".7"/>
+              <line class="mt-grid" x1="40" y1="240" x2="620" y2="240"/>
+              <line class="mt-mean" x1="40" y1="200" x2="620" y2="200"/>
+              <text class="mt-lab" x="628" y="204">mean</text>
+              <line class="mt-band mt-b1" x1="40" y1="174" x2="620" y2="174"/>
+              <line class="mt-band mt-b2" x1="40" y1="148" x2="620" y2="148"/>
+              <line class="mt-band mt-b3" x1="40" y1="122" x2="620" y2="122"/>
+              <text class="mt-lab mt-bl" x="628" y="178">1&#963;</text>
+              <text class="mt-lab mt-bl" x="628" y="152">2&#963;</text>
+              <text class="mt-lab mt-bl" x="628" y="126">3&#963;</text>
+              <text class="mt-winlabel" x="48" y="234">30-day rolling baseline</text>
+              <path id="mt-base" class="mt-line mt-base" pathLength="1" d=""/>
+              <line class="mt-rel" x1="571" y1="40" x2="571" y2="240"/>
+              <text class="mt-winlabel mt-rellab" x="565" y="34" text-anchor="end">release</text>
+              <path id="mt-tail" class="mt-line mt-tail" pathLength="1" d=""/>
+              <circle id="mt-dot" class="mt-dot" r="7" cx="0" cy="0"/>
+              <g class="mt-alert"><text id="mt-alert" x="0" y="0" text-anchor="end">Breach: above 3&#963;</text></g>
+            </svg>
+          </div>
+          <div class="mt-stage">
+            <div class="mt-pane" data-pane="0">
+              <span class="pb-chip human">Service owner or platform engineer</span>
+              <h3>Pick one metric with a stable baseline</h3>
+              <p>Good first choices from the course:</p>
+              <ul class="pb-list" style="margin-top:2px"><li>CI test failure rate</li><li>Post-deploy 5xx rate</li><li>PR cycle time</li></ul>
+              <p>Start with one. It should sit in a steady range most of the time.</p>
+            </div>
+            <div class="mt-pane" data-pane="1">
+              <span class="pb-chip gate">Detection script, no model</span>
+              <h3>Draw the bands from the last 30 days</h3>
+              <p>The script computes the mean and sigma. The tiers are written down in version control.</p>
+              <div class="mt-code">metric: ci_test_failure_rate
+baseline: rolling_30d
+rules: western_electric</div>
+              <p>Drift rules catch slow creep that never crosses 3&sigma;. A drift counts as 2&sigma;.</p>
+            </div>
+            <div class="mt-pane" data-pane="2">
+              <span class="pb-chip gate">Detection script, no model</span>
+              <h3>A reading lands outside the bands</h3>
+              <p>A release goes out and the newest reading jumps above 3&sigma;. A scheduled job runs the script, which prints the worst tier the newest reading lands in.</p>
+              <p>The trigger layer can be a scheduled workflow, a webhook from monitoring, or a cron job.</p>
+            </div>
+            <div class="mt-pane" data-pane="3">
+              <span class="pb-chip gate">Response tiers in bands.yaml</span>
+              <h3>The tier sets how far Claude may go</h3>
+              <div class="mt-tier"><b>1&sigma;</b><span>Log only.</span></div>
+              <div class="mt-tier"><b>2&sigma;</b><span>Invoke Claude read-only to diagnose.</span></div>
+              <div class="mt-tier hit"><b>3&sigma;</b><span>Claude may act, only by opening a PR into the review gate or triggering a pre-approved runbook.</span></div>
+            </div>
+            <div class="mt-pane" data-pane="4">
+              <span class="pb-chip agent">The monitoring agent</span>
+              <h3>The agent writes a new intent.md</h3>
+              <div class="mt-doc">
+                <header><span class="pb-file">intent.md</span>Author: monitoring agent. Status: draft.</header>
+                <ul>
+                  <li><b>Problem</b> The anomaly and the evidence.</li>
+                  <li><b>Proposed outcome</b> What should be true again.</li>
+                  <li><b>Affected users and systems</b></li>
+                  <li><b>Constraints</b></li>
+                  <li><b>Open questions</b> What a person needs to decide.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mt-pane" data-pane="5">
+              <span class="pb-chip human">Service owner or on-call</span>
+              <h3>A person triages the queue</h3>
+              <div class="mt-route">
+                <div>Fix now<small>Goes to Stage 1</small></div>
+                <div>Schedule<small>Goes to Stage 1 later</small></div>
+                <div>Dismiss<small>Tunes the bands</small></div>
+              </div>
+              <p>Product-facing findings go to the product owner. Every triage decision is timestamped.</p>
+            </div>
+            <div class="mt-pane" data-pane="6">
+              <span class="pb-chip agent">The loop restarts</span>
+              <h3>The intent.md enters Stage 1</h3>
+              <div class="mt-flow"><span class="pb-chip gate">Stage 6: Maintain</span><span class="ar" aria-hidden="true">&rarr;</span><span class="pb-file">intent.md</span><span class="ar" aria-hidden="true">&rarr;</span><span class="pb-chip human">Stage 1: Plan</span></div>
+              <p>It flows through requirements, plan, build, test and review. When the fix ships, add an eval for the incident.</p>
+              <a class="pb-btn" href="{{BP}}/plan/">Go to Stage 1: Plan &rarr;</a>
+            </div>
+          </div>
+        </div>
+        <ol class="mt-steps">
+          <li class="pb-step"><button data-pb-goto="0">Pick one metric with a stable baseline</button></li>
+          <li class="pb-step"><button data-pb-goto="1">Set 1, 2 and 3 sigma bands</button></li>
+          <li class="pb-step"><button data-pb-goto="2">A reading breaches 3 sigma</button></li>
+          <li class="pb-step"><button data-pb-goto="3">Tiered response applies</button></li>
+          <li class="pb-step"><button data-pb-goto="4">Agent writes intent.md</button></li>
+          <li class="pb-step"><button data-pb-goto="5">Owner triages</button></li>
+          <li class="pb-step"><button data-pb-goto="6">Loop restarts at Stage 1</button></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Also in Stage 6</span>
+        <h2>Two more ways the loop gets started</h2>
+      </div>
+      <div class="mt-cards">
+        <div class="pb-card agent pb-reveal d1">
+          <span class="pb-chip agent mt-tag">Claude on call with Claude Tag</span>
+          <h3>Claude joins the incident channel</h3>
+          <p>Claude Tag is in public beta, currently in Slack. Claude becomes a member of incident channels under its own identity, so each incident gets a first responder.</p>
+          <ul>
+            <li>The conversation and what the team knows stay in the channel, and anyone there can guide the response.</li>
+            <li>Through MCP, Claude checks the metric is back at baseline and says so in the thread.</li>
+            <li>It writes the post-mortem to a version-controlled lessons file that later investigations read.</li>
+            <li>Tagged on a ticket, it triages. A small, bounded fix arrives as a PR through the review gate. Anything larger becomes an intent.md for Stage 1.</li>
+          </ul>
+        </div>
+        <div class="pb-card gate pb-reveal d2">
+          <span class="pb-chip old mt-tag">From the blog, lower confidence</span>
+          <h3>Recurring security scans</h3>
+          <p>The Anthropic blog describes scheduled scans of connected repos through Claude Security. Findings are validated and come with confidence ratings. This is absent from the academy lessons, and we have not checked it against the original text.</p>
+          <p>The routing matches the rest of Stage 6. Small fixes go through the review gate. Larger issues become an intent.md.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Hand-off</span>
+        <h2>What Stage 6 hands to the next stage</h2>
+      </div>
+      <div class="mt-hand pb-reveal d1">
+        <div>
+          <span class="pb-chip agent">The artifact</span>
+          <span class="pb-file">intent.md</span>
+          <p>Written by the monitoring agent in the Stage 1 format, with the evidence from the breach.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div>
+          <span class="pb-chip human">The trigger</span>
+          <h3>A triage decision of "fix now" or "schedule"</h3>
+          <p>The intent.md goes to Stage 1: Plan, and the loop starts again.</p>
+          <a class="pb-btn ghost" href="{{BP}}/plan/">Stage 1: Plan &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-takeaways pb-reveal">
+        <h3>Key takeaways</h3>
+        <ul>
+          <li>Start with one metric that has a stable baseline.</li>
+          <li>Detection is a deterministic script. Claude acts only after a band is breached.</li>
+          <li>Tiers set the limits: 1&sigma; logs, 2&sigma; diagnoses read-only, 3&sigma; proposes a PR or a pre-approved runbook.</li>
+          <li>The agent writes the finding as an intent.md. A person decides: fix now, schedule or dismiss.</li>
+          <li>Every shipped fix adds an eval, so repeat incidents fall over time.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section dark">
+    <div class="pb-wrap mt-end">
+      <span class="pb-kicker" style="color:#fda4af">Stage 6 and the whole loop</span>
+      <h2>The loop keeps running</h2>
+      <p>People keep the judgement. Agents do the watching, the diagnosing and the drafting, and each finding becomes the start of the next turn.</p>
+      <div class="acts">
+        <a class="pb-btn red" href="{{BP}}/">Back to the overview</a>
+        <a class="pb-btn ghost" href="{{BP}}/roadmap/">Your transition roadmap</a>
+      </div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  var X0 = 40, DX = 580 / 56, MEAN = 200, SIG = 26;
+  function val(i) { return 0.55 * Math.sin(i * 1.7) + 0.35 * Math.sin(i * 0.63 + 1) + 0.2 * Math.sin(i * 3.1); }
+  function tailVal(i) { return i === 54 ? val(54) : i === 55 ? 0.4 : 3.8; }
+  function pt(i, v) { return [X0 + i * DX, MEAN - v * SIG]; }
+  function path(from, to, fn) {
+    var d = '';
+    for (var i = from; i <= to; i++) { var p = pt(i, fn(i)); d += (i === from ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' '; }
+    return d;
+  }
+  var svg = document.getElementById('mt-svg');
+  document.getElementById('mt-base').setAttribute('d', path(0, 54, val));
+  document.getElementById('mt-tail').setAttribute('d', path(54, 56, tailVal));
+  var end = pt(56, 3.8), dot = document.getElementById('mt-dot');
+  dot.setAttribute('cx', end[0]); dot.setAttribute('cy', end[1]);
+  var al = document.getElementById('mt-alert');
+  al.setAttribute('x', end[0] - 14); al.setAttribute('y', end[1] + 4);
+  var panes = [].slice.call(document.querySelectorAll('.mt-pane'));
+  function render(i) {
+    svg.classList.toggle('mt-s-bands', i >= 1);
+    svg.classList.toggle('mt-s-breach', i >= 2);
+    svg.classList.toggle('mt-s-act', i >= 3);
+    panes.forEach(function (p, j) { p.classList.toggle('on', j === i); });
+  }
+  var run = document.getElementById('mt-run');
+  run.addEventListener('pb:step', function (e) { render(e.detail); });
+  render(+run.getAttribute('data-step') || 0);
+  function start() { svg.classList.add('mt-drawn'); }
+  if (PB.reduced || !('IntersectionObserver' in window)) start();
+  else new IntersectionObserver(function (es, io) { if (es[0].isIntersecting) { start(); io.disconnect(); } }, { threshold: 0.3 }).observe(svg);
+})();
+</script>
+</body>
+</html>

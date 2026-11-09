@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI-native SDLC playbook | Bitovi</title>
+<meta name="description" content="AI made code fast. See how the process around it changes: a line becomes a loop, and people stay at the gates.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+/* 0. whole lifecycle, two lanes */
+.rc { background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 0 22px 22px; border: 1px solid var(--pb-line); }
+.rc-top { position: sticky; top: 50px; z-index: 5; background: #fff; border-radius: 20px 20px 0 0; padding: 18px 0 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; border-bottom: 1px solid var(--pb-line); margin-bottom: 14px; }
+.rc-lane { border-radius: 14px; padding: 12px 16px; }
+.rc-lane.t { background: var(--pb-old-bg); }
+.rc-lane.a { background: var(--pb-agent-bg); }
+.rc-lane h3 { font-size: 16px; margin-bottom: 2px; }
+.rc-lane p { font-size: 14px; line-height: 1.35; }
+.rc-lane.t p { color: var(--pb-muted); }
+.rc-lane.a p { color: #115e59; }
+.rc-n { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.rc-n b { font-family: var(--pb-display); font-weight: 800; font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.rc-lane.t .rc-n b { color: #475569; }
+.rc-lane.a .rc-n b { color: #0f766e; }
+.rc-n span { font-family: var(--pb-display); font-weight: 700; font-size: 14px; }
+.rc-n b.bump { animation: ov-bump .3s var(--pb-ease); }
+.rc-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: auto auto auto; grid-auto-flow: column; gap: 10px 10px; }
+.rc-h { display: flex; align-items: center; gap: 8px; font-family: var(--pb-display); font-weight: 700; font-size: 16px; color: var(--pb-ink); text-decoration: none; }
+.rc-h i { font-style: normal; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--pb-ink); color: #fff; font-size: 12px; display: grid; place-items: center; }
+.rc-h:hover { text-decoration: underline; }
+.rc-cell { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rc-row { display: flex; align-items: center; gap: 6px; }
+.rc-bar { position: relative; height: 18px; border-radius: 9px; background: var(--pb-line); overflow: hidden; flex: 1 1 auto; }
+.rc-cell.a .rc-bar { flex: 0 0 52%; }
+.rc-fill { position: absolute; inset: 0; transform: scaleX(0); transform-origin: left; background: #64748b; border-radius: 9px; }
+.rc-cell.a .rc-fill { background: var(--pb-agent); }
+.rc-cell.t .rc-bar::after { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 34%; background: repeating-linear-gradient(135deg, rgba(217,119,6,.75) 0 4px, rgba(253,230,138,.9) 4px 8px); border-radius: 0 9px 9px 0; }
+.rc-gate { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--pb-human); box-shadow: 0 0 0 0 rgba(225,29,72,.5); }
+.rc-gate.hit { animation: rc-ping .6s ease-out; }
+.rc-file { align-self: flex-start; font-family: var(--pb-mono); font-size: 11px; font-weight: 700; color: var(--pb-file); background: var(--pb-file-bg); border-radius: 5px; padding: 1px 6px; opacity: 0; transform: translateY(-4px); transition: opacity .3s, transform .3s; }
+.rc-cell.done .rc-file { opacity: 1; transform: none; }
+.rc-ph { font-size: 14px; line-height: 1.3; }
+.rc-cell.t .rc-ph { color: var(--pb-muted); }
+.rc-cell.a .rc-ph { color: #0f766e; font-weight: 700; font-family: var(--pb-display); }
+.rc-fb { align-self: flex-start; font-size: 11px; font-weight: 700; font-family: var(--pb-display); border-radius: 999px; padding: 2px 8px; }
+.rc-cell.t .rc-fb { background: var(--pb-old-bg); color: var(--pb-muted); border: 1px dashed var(--pb-old); }
+.rc-cell.a .rc-fb { background: var(--pb-gate-bg); color: #92400e; opacity: .35; transition: opacity .3s; }
+.rc-cell.a .rc-fb.on { opacity: 1; }
+.rc-cell.active .rc-bar { box-shadow: 0 0 0 3px rgba(15,23,42,.12); }
+.rc-ui { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.rc-note { flex: 1; min-width: 240px; font-size: 14px; color: var(--pb-muted); }
+.rc-key { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--pb-muted); align-items: center; }
+.rc-key span { display: inline-flex; align-items: center; gap: 6px; }
+.rc-key .sw { width: 18px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(135deg, rgba(217,119,6,.75) 0 3px, rgba(253,230,138,.9) 3px 6px); }
+.rc-key .gd { width: 12px; height: 12px; border-radius: 50%; background: var(--pb-human); }
+@keyframes rc-ping { 0% { box-shadow: 0 0 0 0 rgba(225,29,72,.6); transform: scale(1.5); } 100% { box-shadow: 0 0 0 12px rgba(225,29,72,0); transform: none; } }
+@media (max-width: 720px) {
+  .rc { padding: 0 12px 16px; }
+  .rc-top { grid-template-columns: 1fr 1fr; gap: 8px; top: 48px; padding: 10px 0 8px; }
+  .rc-lane { padding: 8px 10px; }
+  .rc-lane p { display: none; }
+  .rc-lane h3 { font-size: 14px; }
+  .rc-n b { font-size: 30px; }
+  .rc-grid { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-flow: row; gap: 8px 12px; }
+  .rc-h { grid-column: 1 / -1; padding-top: 10px; border-top: 1px solid var(--pb-line); }
+  .rc-h:first-child { border-top: 0; padding-top: 0; }
+  .rc-cell.a .rc-bar { flex-basis: 60%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-gate.hit, .rc-n b.bump { animation: none; }
+  .rc-file { transition: none; }
+}
+
+/* 1. bottleneck */
+.ov-pipe { background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 24px 24px 22px; --bw: 24px; --bh: 18px; }
+.ov-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.ov-count { display: flex; align-items: baseline; gap: 10px; }
+.ov-count b { font-family: var(--pb-display); font-weight: 800; font-size: 56px; line-height: 1; color: var(--pb-muted); min-width: 1.6ch; transition: color .3s; font-variant-numeric: tabular-nums; }
+.ov-count span { font-family: var(--pb-display); font-weight: 700; font-size: 16px; color: var(--pb-muted); }
+.ov-pipe.after .ov-count b { color: var(--pb-gate); }
+.ov-count b.bump { animation: ov-bump .25s var(--pb-ease); }
+.ov-row6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ov-st { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 0 4px; min-width: 0; }
+.ov-qn { min-height: 24px; text-align: center; font-family: var(--pb-display); font-weight: 800; font-size: 18px; color: var(--pb-gate); }
+.ov-queue { height: 130px; display: flex; flex-wrap: wrap-reverse; align-content: flex-start; justify-content: center; gap: 3px; }
+.ov-queue i { width: var(--bw); height: var(--bh); border-radius: 4px; background: var(--pb-gate); animation: ov-drop .45s var(--pb-ease) both; }
+.ov-box { border: 2px solid var(--pb-line); border-radius: 14px; padding: 12px 4px; text-align: center; background: var(--pb-soft); transition: border-color .4s, background .4s, box-shadow .4s; }
+.ov-box b { display: block; font-family: var(--pb-display); font-size: 16px; color: var(--pb-ink); }
+.ov-box small { display: block; font-size: 12px; color: var(--pb-muted); margin-top: 2px; }
+.ov-pipe.after .ov-st.fast .ov-box { border-color: var(--pb-agent); background: var(--pb-agent-bg); box-shadow: 0 0 0 5px rgba(13,148,136,.22), 0 0 28px rgba(13,148,136,.45); animation: ov-glow 1.1s ease-in-out infinite alternate; }
+.ov-pipe.after .ov-st.slow .ov-box { border-color: var(--pb-gate); background: var(--pb-gate-bg); }
+.ov-tag { font-size: 12px; font-weight: 700; font-family: var(--pb-display); text-align: center; min-height: 18px; color: var(--pb-muted); }
+.ov-st.fast .ov-tag { color: var(--pb-agent); }
+.ov-st.slow .ov-tag { color: var(--pb-gate); }
+.ov-rail { position: relative; height: 22px; margin-top: 4px; }
+.ov-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--pb-line); }
+.ov-tok { position: absolute; top: 3px; left: -4%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--pb-old); }
+.ov-pipe.after .ov-tok { background: var(--pb-agent); }
+.ov-ui { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.ov-note { flex: 1; min-width: 240px; font-size: 16px; color: var(--pb-body); font-weight: 700; }
+@keyframes ov-drop { from { opacity: 0; transform: translateY(-26px) scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes ov-bump { 50% { transform: scale(1.12); } }
+@keyframes ov-glow { from { box-shadow: 0 0 0 4px rgba(13,148,136,.18), 0 0 14px rgba(13,148,136,.3); } to { box-shadow: 0 0 0 7px rgba(13,148,136,.3), 0 0 34px rgba(13,148,136,.6); } }
+
+/* 2. line to loop */
+.ov-flow { background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 20px 20px 22px; }
+.ov-flow svg { display: block; width: 100%; height: auto; max-width: 760px; margin: 0 auto; overflow: visible; }
+.ov-fn { transform: translate(var(--lx), var(--ly)); transition: transform 1.1s var(--pb-ease); transition-delay: calc(var(--i) * 70ms); }
+.ov-flow[data-mode="loop"] .ov-fn { transform: translate(var(--cx), var(--cy)); }
+.ov-fn circle { fill: var(--pb-old-bg); stroke: var(--pb-old); stroke-width: 2.5; transition: fill .5s, stroke .5s; }
+.ov-fn text { text-anchor: middle; dominant-baseline: central; font-family: var(--pb-display); font-weight: 700; font-size: 15px; fill: var(--pb-ink); }
+.ov-flow[data-mode="loop"] .ov-fn circle { fill: var(--pb-agent-bg); stroke: var(--pb-agent); }
+.ov-hline { stroke: var(--pb-old); stroke-width: 3; stroke-dasharray: 3 9; stroke-linecap: round; transition: opacity .5s; }
+.ov-hlab { text-anchor: middle; font-family: var(--pb-display); font-weight: 600; font-size: 15px; fill: var(--pb-muted); transition: opacity .5s; }
+.ov-flow[data-mode="loop"] .ov-hline, .ov-flow[data-mode="loop"] .ov-hlab { opacity: 0; }
+.ov-arc { opacity: 0; fill: none; stroke: var(--pb-agent); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s var(--pb-ease); transition-delay: calc(var(--i) * 160ms); }
+.ov-arc.fb { stroke: var(--pb-gate); stroke-width: 5; transition-delay: 0s; }
+.ov-flow.drawn .ov-arc:not(.fb), .ov-flow.fbk .ov-arc.fb { stroke-dashoffset: 0; opacity: 1; }
+.ov-flow.fbk .ov-arc.fb { stroke-dashoffset: 0; transition-duration: 1s; }
+.ov-chip { transform: translate(var(--lx), var(--ly)); opacity: 0; transition: transform .9s var(--pb-ease), opacity .5s; transition-delay: calc(var(--i) * 160ms); }
+.ov-flow.drawn .ov-chip { transform: translate(var(--cx), var(--cy)); opacity: 1; }
+.ov-chip rect { fill: var(--pb-file-bg); stroke: var(--pb-file); stroke-width: 1.5; }
+.ov-chip text { text-anchor: middle; dominant-baseline: central; font-family: var(--pb-mono); font-weight: 700; font-size: 14px; fill: var(--pb-file); }
+.ov-mid { text-anchor: middle; font-family: var(--pb-display); font-weight: 700; font-size: 17px; fill: var(--pb-gate); opacity: 0; transition: opacity .6s; }
+.ov-flow.fbk .ov-mid { opacity: 1; }
+.ov-flowui { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.ov-flowstat { flex: 1; min-width: 220px; font-weight: 700; color: var(--pb-ink); }
+.ov-cap { margin-top: 22px; max-width: 40em; }
+
+/* 4. what stays human */
+.ov-gates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.ov-gcol { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.ov-agent { border-radius: 12px; background: #0f766e; color: #fff; font-size: 15px; font-weight: 700; padding: 14px 12px; text-align: center; transform-origin: left; transform: scaleX(0); transition: transform .8s var(--pb-ease); transition-delay: calc(var(--i) * 180ms); }
+.ov-down { align-self: center; width: 3px; height: 26px; background: rgba(255,255,255,.35); transform: scaleY(0); transform-origin: top; transition: transform .4s; transition-delay: calc(var(--i) * 180ms + 500ms); }
+.ov-person { border-radius: 12px; background: #be123c; color: #fff; font-family: var(--pb-display); font-size: 16px; font-weight: 700; padding: 16px 12px; text-align: center; flex: 1; opacity: 0; transform: scale(.85); transition: opacity .5s, transform .5s var(--pb-ease); transition-delay: calc(var(--i) * 180ms + 650ms); }
+.ov-gates.in .ov-agent { transform: none; }
+.ov-gates.in .ov-down { transform: none; }
+.ov-gates.in .ov-person { opacity: 1; transform: none; }
+.ov-gkey { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.ov-line { margin-top: 24px; font-family: var(--pb-display); font-size: 22px; font-weight: 600; color: #fff; max-width: 30em; }
+
+/* 5. start */
+.ov-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 32px; }
+.ov-step { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 0; border-top: 4px solid var(--pb-ink); }
+.ov-step b.n { font-family: var(--pb-display); font-weight: 800; font-size: 64px; line-height: 1; color: var(--pb-red); }
+.ov-step h3 { font-size: 26px; }
+.ov-step p { font-size: 18px; }
+.ov-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.ov-btns .pb-btn { font-size: 17px; padding: 14px 24px; }
+
+@media (max-width: 960px) {
+  .rc-top { grid-template-columns: 1fr; }
+  .rc-grid { gap: 10px 6px; }
+  .rc-ph { font-size: 13px; }
+  .ov-gates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .ov-pipe { --bw: 12px; --bh: 10px; padding: 16px 8px; }
+  .ov-flow { padding: 14px 8px 18px; }
+  .ov-st { padding: 0 2px; }
+  .ov-queue { height: 100px; gap: 2px; }
+  .ov-qn { font-size: 13px; }
+  .ov-box { padding: 8px 0; border-radius: 10px; }
+  .ov-box b { font-size: 11px; }
+  .ov-box small { display: none; }
+  .ov-tag { font-size: 9px; }
+  .ov-count b { font-size: 44px; }
+  .ov-steps, .ov-gates { grid-template-columns: 1fr; }
+  .ov-line { font-size: 19px; }
+  .ov-step b.n { font-size: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ov-queue i, .ov-count b.bump { animation: none; }
+  .ov-pipe.after .ov-st.fast .ov-box { animation: none; }
+  .ov-fn, .ov-chip, .ov-arc, .ov-agent, .ov-down, .ov-person { transition: none; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>The AI-native SDLC playbook</h1>
+        <p class="lead">AI made writing code fast, so the process around the code has to change too, with people still deciding what ships.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section" id="whole">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">1. The whole picture</span>
+        <h2>The same six stages, two ways to run them</h2>
+        <p class="pb-lede">Press Run both. Pick a stage name to open that stage.</p>
+      </div>
+      <div class="rc pb-reveal" id="rc" role="group" aria-label="Two lanes run the same six stages. The traditional lane finishes once while the AI-accelerated lane finishes and loops back several times.">
+        <div class="rc-top">
+          <div class="rc-lane t"><h3>Traditional</h3><p>A different role at each stage. Handoffs by ticket and sign-off. Feedback arrives late.</p><div class="rc-n"><b id="rc-nt">0</b><span>delivered</span></div></div>
+          <div class="rc-lane a"><h3>AI-accelerated</h3><p>Agents do the work. People approve at gates. Each stage leaves a file. Feedback loops back to Plan.</p><div class="rc-n"><b id="rc-na">0</b><span>delivered, looping</span></div></div>
+        </div>
+        <div class="rc-grid">
+          <a class="rc-h" href="{{BP}}/plan/"><i>1</i>Plan</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">Requirements by committee</p></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div><span class="rc-gate" title="Person approves intent"></span></div><span class="rc-file">intent.md</span><p class="rc-ph">Intent captured in hours</p></div>
+
+          <a class="rc-h" href="{{BP}}/design/"><i>2</i>Design</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">Specs handed over between teams</p></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div><span class="rc-gate" title="Person approves spec and plan"></span></div><span class="rc-file">spec.md</span><p class="rc-ph">One working session with an agent</p></div>
+
+          <a class="rc-h" href="{{BP}}/build/"><i>3</i>Build</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">Code and tests by hand</p></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><span class="rc-file">plan.md, diff</span><p class="rc-ph">AI writes both, guided by shared files</p></div>
+
+          <a class="rc-h" href="{{BP}}/test/"><i>4</i>Test</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">A QA gate between stages</p></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><span class="rc-file">tests, evals</span><p class="rc-ph">Evals run all the way through</p></div>
+
+          <a class="rc-h" href="{{BP}}/deploy/"><i>5</i>Deploy</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">People read every line</p></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div><span class="rc-gate" title="Person approves critical code and releases"></span></div><span class="rc-file">PR + review</span><p class="rc-ph">Agents review, hooks enforce the rules</p></div>
+
+          <a class="rc-h" href="{{BP}}/maintain/"><i>6</i>Maintain</a>
+          <div class="rc-cell t"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div></div><p class="rc-ph">People watch production</p><span class="rc-fb">feedback arrives late</span></div>
+          <div class="rc-cell a"><div class="rc-row"><div class="rc-bar"><div class="rc-fill"></div></div><span class="rc-gate" title="Person triages production findings"></span></div><span class="rc-file">incident record</span><p class="rc-ph">Agents watch and feed issues back</p><span class="rc-fb">back to Plan</span></div>
+        </div>
+        <div class="rc-key" aria-hidden="true"><span><i class="sw"></i>Waiting in a queue</span><span><i class="gd"></i>A person approves</span></div>
+        <div class="rc-ui">
+          <button class="pb-btn red" type="button" id="rc-run">Run both</button>
+          <button class="pb-btn ghost" type="button" id="rc-reset">Reset</button>
+          <p class="rc-note" id="rc-note" aria-live="polite">Press Run both. Bar lengths and counts are illustrative.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft" id="bottleneck">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">2. The problem</span>
+        <h2>Code got fast. The process did not.</h2>
+        <p class="pb-lede">Speed up the build and watch where the work goes.</p>
+      </div>
+      <div class="ov-pipe pb-reveal" id="ov-pipe" role="group" aria-label="Six SDLC stages. Press Speed up build to see work pile up in front of the stages that still run at human speed.">
+        <div class="ov-top">
+          <div class="ov-count"><b id="ov-total">0</b><span>items waiting</span></div>
+        </div>
+        <div class="ov-row6">
+          <div class="ov-st slow" data-q="0"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Plan</b><small>approvals</small></div><div class="ov-tag" data-after="human speed"></div></div>
+          <div class="ov-st slow" data-q="1"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Design</b><small>approvals</small></div><div class="ov-tag" data-after="human speed"></div></div>
+          <div class="ov-st fast"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Build</b><small>code and tests</small></div><div class="ov-tag" data-after="AI speed"></div></div>
+          <div class="ov-st slow" data-q="3"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Test</b><small>review</small></div><div class="ov-tag" data-after="human speed"></div></div>
+          <div class="ov-st slow" data-q="4"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Deploy</b><small>sign-off</small></div><div class="ov-tag" data-after="human speed"></div></div>
+          <div class="ov-st"><div class="ov-qn" aria-hidden="true"></div><div class="ov-queue" aria-hidden="true"></div><div class="ov-box"><b>Maintain</b><small>watch</small></div><div class="ov-tag"></div></div>
+        </div>
+        <div class="ov-rail" id="ov-rail" aria-hidden="true"></div>
+        <div class="ov-ui">
+          <button class="pb-btn red" type="button" id="ov-speed" aria-pressed="false">Speed up build</button>
+          <button class="pb-btn ghost" type="button" id="ov-reset">Reset</button>
+          <p class="ov-note" id="ov-note" aria-live="polite">Today: work flows through every stage at about the same pace.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section" id="loop">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">3. The big idea</span>
+        <h2>The line becomes a loop</h2>
+        <p class="pb-lede">Each stage leaves a file. The next stage reads it. Production feeds back into planning.</p>
+      </div>
+      <div class="ov-flow pb-reveal" id="ov-flow" data-mode="line">
+        <div id="ov-svg-host" role="img" aria-label="Six stages: plan, design, build, test, deploy and maintain. First they hand work along a line. Then they form a loop where each stage leaves a file the next stage reads, and production feedback returns to planning."></div>
+        <div class="ov-flowui">
+          <p class="ov-flowstat" id="ov-flowstat" aria-live="polite">Today: a chain of handoffs between roles.</p>
+          <button class="pb-btn ghost" type="button" id="ov-replay">Replay</button>
+        </div>
+      </div>
+      <p class="pb-quote ov-cap pb-reveal">Every stage leaves a record, so the chain of commits is also your audit trail.</p>
+    </div>
+  </section>
+
+  <section class="pb-section dark" id="humans">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker" style="color:#fda4af">4. What stays human</span>
+        <h2>Agents do the work. People hold the gates.</h2>
+      </div>
+      <div class="ov-gates pb-reveal" id="ov-gates">
+        <div class="ov-gcol"><div class="ov-agent" style="--i:0">Agents draft the intent</div><div class="ov-down" style="--i:0"></div><div class="ov-person" style="--i:0">Approve intent</div></div>
+        <div class="ov-gcol"><div class="ov-agent" style="--i:1">Agents write the spec and plan</div><div class="ov-down" style="--i:1"></div><div class="ov-person" style="--i:1">Approve spec and plan</div></div>
+        <div class="ov-gcol"><div class="ov-agent" style="--i:2">Agents build, test and review</div><div class="ov-down" style="--i:2"></div><div class="ov-person" style="--i:2">Approve critical code and releases</div></div>
+        <div class="ov-gcol"><div class="ov-agent" style="--i:3">Agents watch production</div><div class="ov-down" style="--i:3"></div><div class="ov-person" style="--i:3">Triage what they find</div></div>
+      </div>
+      <div class="ov-gkey"><span class="pb-chip agent">Agent does the work</span><span class="pb-chip human">A person decides</span></div>
+      <p class="ov-line pb-reveal">People stay accountable for every decision that needs judgment.</p>
+    </div>
+  </section>
+
+  <section class="pb-section" id="start">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">5. How to start</span>
+        <h2>Start in three steps</h2>
+        <p class="pb-lede">You can begin almost anywhere. The roadmap shows what depends on what.</p>
+      </div>
+      <div class="ov-steps">
+        <div class="ov-step pb-reveal"><b class="n">1</b><h3>Set up the foundations</h3><p>Put team knowledge in files agents can read.</p></div>
+        <div class="ov-step pb-reveal d1"><b class="n">2</b><h3>Add the gates</h3><p>Turn approvals into checks that run as the AI works.</p></div>
+        <div class="ov-step pb-reveal d2"><b class="n">3</b><h3>Close the loop</h3><p>Let production signals write the next piece of work.</p></div>
+      </div>
+      <div class="ov-btns pb-reveal">
+        <a class="pb-btn red" href="{{BP}}/roadmap/">See the full roadmap</a>
+        <a class="pb-btn ghost" href="{{BP}}/plan/">Step through the stages</a>
+      </div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
+  var NS = 'http://www.w3.org/2000/svg';
+  function inView(el, cb, threshold) {
+    if (!('IntersectionObserver' in window)) { cb(); return; }
+    new IntersectionObserver(function (es, io) { if (es[0].isIntersecting) { io.disconnect(); cb(); } }, { threshold: threshold }).observe(el);
+  }
+
+  /* 0. Whole lifecycle: two lanes run at once */
+  var rc = $('#rc'), rcT = $('#rc-nt'), rcA = $('#rc-na'), rcNote = $('#rc-note');
+  var tCells = $$('.rc-cell.t', rc), aCells = $$('.rc-cell.a', rc);
+  var RC_IDLE = 'Press Run both. Bar lengths and counts are illustrative.';
+  var RC_RUN = 'Both lanes started together. The AI-accelerated lane keeps finishing and looping back to Plan. Bar lengths and counts are illustrative.';
+  var RC_END = 'End state: the AI-accelerated lane finishes several loops in the time the traditional lane finishes one. Bar lengths and counts are illustrative.';
+  var rcGen = 0, rcAnims = [], nT = 0, nA = 0;
+  function rcSet(el, n) { el.textContent = n; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  function rcAll() { tCells.concat(aCells).forEach(function (c) { $('.rc-fill', c).getAnimations().forEach(function (a) { a.cancel(); }); }); }
+  function rcClear() {
+    rcAll();
+    tCells.concat(aCells).forEach(function (c) { c.classList.remove('active', 'done'); var f = $('.rc-fb', c); if (f && c.classList.contains('a')) f.classList.remove('on'); });
+  }
+  function rcFill(cell, ms) {
+    var a = $('.rc-fill', cell).animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: ms, easing: 'linear', fill: 'forwards' });
+    return a.finished;
+  }
+  function rcLane(cells, per, gate, isAI, g) {
+    return (async function () {
+      while (g === rcGen) {
+        cells.forEach(function (c) { $('.rc-fill', c).getAnimations().forEach(function (a) { a.cancel(); }); });
+        cells.forEach(function (c) { c.classList.remove('active', 'done'); var f = $('.rc-fb', c); if (isAI && f) f.classList.remove('on'); });
+        for (var i = 0; i < cells.length; i++) {
+          cells[i].classList.add('active');
+          await rcFill(cells[i], per);
+          if (g !== rcGen) return;
+          cells[i].classList.remove('active'); cells[i].classList.add('done');
+          var gt = $('.rc-gate', cells[i]);
+          if (gt) { gt.classList.remove('hit'); void gt.offsetWidth; gt.classList.add('hit'); await new Promise(function (r) { setTimeout(r, gate); }); if (g !== rcGen) return; }
+        }
+        if (isAI) { var fb = $('.rc-fb', cells[5]); if (fb) fb.classList.add('on'); nA++; rcSet(rcA, nA); } else { nT++; rcSet(rcT, nT); }
+        await new Promise(function (r) { setTimeout(r, isAI ? 300 : 1500); });
+      }
+    })().catch(function () {});
+  }
+  function rcRun() {
+    rcGen++; rcClear(); nT = 0; nA = 0; rcT.textContent = '0'; rcA.textContent = '0';
+    rcNote.textContent = RC_RUN;
+    rcLane(tCells, 3000, 0, false, rcGen); rcLane(aCells, 250, 150, true, rcGen);
+  }
+  function rcReset() { rcGen++; rcClear(); nT = 0; nA = 0; rcT.textContent = '0'; rcA.textContent = '0'; rcNote.textContent = RC_IDLE; }
+  function rcStatic() {
+    rcGen++; rcClear();
+    tCells.concat(aCells).forEach(function (c) { c.classList.add('done'); $('.rc-fill', c).style.transform = 'scaleX(1)'; });
+    $$('.rc-fb.on, .rc-cell.a .rc-fb', rc).forEach(function (f) { f.classList.add('on'); });
+    rcT.textContent = '1'; rcA.textContent = '3+'; rcNote.textContent = RC_END;
+  }
+  $('#rc-run').addEventListener('click', function () { if (PB.reduced) rcStatic(); else rcRun(); });
+  $('#rc-reset').addEventListener('click', function () { if (PB.reduced) { rcGen++; rcClear(); tCells.concat(aCells).forEach(function (c) { $('.rc-fill', c).style.transform = 'scaleX(0)'; }); rcT.textContent = '0'; rcA.textContent = '0'; rcNote.textContent = RC_IDLE; } else rcReset(); });
+  if (PB.reduced) rcStatic(); else inView(rc, function () { setTimeout(rcRun, 700); }, 0.5);
+
+  /* 1. Bottleneck: tokens fly along the rail, queues grow in front of human-speed stages */
+  var pipe = $('#ov-pipe'), rail = $('#ov-rail'), note = $('#ov-note'), speed = $('#ov-speed'), totalEl = $('#ov-total');
+  var gated = $$('.ov-st[data-q]', pipe);
+  var CAP = 28;
+  var RATE = { 0: 2.4, 1: 1.8, 3: 2.2, 4: 1.6 };   /* items per second joining each queue */
+  var BEFORE = 'Today: work flows through every stage at about the same pace.';
+  var AFTER = 'Build now runs at AI speed. Work piles up in front of the approvals that still run at human speed.';
+  var STATIC = { 0: 9, 1: 6, 3: 8, 4: 5 };
+  var after = false, running = false, q = {}, acc = {}, tickT = null, spawnT = null, visible = false, toks = [], last = 0;
+
+  function qEl(i) { return gated.filter(function (g) { return +g.getAttribute('data-q') === i; })[0]; }
+  function paintQueue(i, n) {
+    var g = qEl(i), box = $('.ov-queue', g), shown = Math.min(n, CAP);
+    while (box.children.length < shown) box.appendChild(document.createElement('i'));
+    while (box.children.length > shown) box.removeChild(box.lastChild);
+    $('.ov-qn', g).textContent = n ? n : '';
+  }
+  function paintAll() {
+    var sum = 0;
+    Object.keys(RATE).forEach(function (k) { var n = q[k] || 0; sum += n; paintQueue(+k, n); });
+    if (+totalEl.textContent !== sum) { totalEl.textContent = sum; totalEl.classList.remove('bump'); void totalEl.offsetWidth; totalEl.classList.add('bump'); }
+  }
+  function clearQueues() { Object.keys(RATE).forEach(function (k) { q[k] = 0; acc[k] = 0; }); paintAll(); }
+
+  function clearTokens() {
+    toks.forEach(function (t) { if (t.anim) t.anim.cancel(); if (t.el.parentNode) t.el.parentNode.removeChild(t.el); });
+    toks = [];
+  }
+  function spawn() {
+    if (!visible || document.hidden) return;
+    var el = document.createElement('i'); el.className = 'ov-tok'; rail.appendChild(el);
+    var hop = 420, dwell = 650, fastHop = 120, fastDwell = 30;
+    var kf = [{ left: '-4%', offset: 0, easing: 'ease-out' }], t = 0, parts = [], i;
+    for (i = 0; i < 6; i++) {
+      var fastStage = after && i === 2;
+      parts.push([i, (after && (i === 2 || i === 3)) ? fastHop : hop, fastStage ? fastDwell : dwell]);
+    }
+    var total = parts.reduce(function (s, p) { return s + p[1] + p[2]; }, 0) + hop;
+    parts.forEach(function (p) {
+      var left = ((p[0] + 0.5) / 6 * 100) + '%';
+      t += p[1]; kf.push({ left: left, offset: t / total, easing: 'linear' });
+      t += p[2]; kf.push({ left: left, offset: t / total, easing: 'ease-in-out' });
+    });
+    kf.push({ left: '104%', offset: 1 });
+    var rec = { el: el };
+    rec.anim = el.animate(kf, { duration: total, fill: 'forwards' });
+    rec.anim.onfinish = function () { if (el.parentNode) el.parentNode.removeChild(el); toks = toks.filter(function (x) { return x !== rec; }); };
+    toks.push(rec);
+  }
+  function loopSpawn() { spawn(); spawnT = setTimeout(loopSpawn, after ? 380 : 1050); }
+  function tick() {
+    var now = Date.now(), dt = Math.min((now - last) / 1000, 0.5); last = now;
+    if (after && visible) {
+      Object.keys(RATE).forEach(function (k) {
+        acc[k] += RATE[k] * dt * (0.6 + Math.random() * 0.8);
+        while (acc[k] >= 1 && q[k] < CAP) { q[k]++; acc[k]--; }
+        if (q[k] >= CAP) acc[k] = 0;
+      });
+      paintAll();
+    }
+    tickT = setTimeout(tick, 220);
+  }
+  function setPipe(on) {
+    after = on;
+    pipe.classList.toggle('after', on);
+    speed.setAttribute('aria-pressed', on);
+    $$('.ov-tag', pipe).forEach(function (t) { t.textContent = on ? (t.getAttribute('data-after') || '') : ''; });
+    note.textContent = on ? AFTER : BEFORE;
+    if (PB.reduced) { Object.keys(RATE).forEach(function (k) { q[k] = on ? STATIC[k] : 0; }); paintAll(); return; }
+    if (on) { Object.keys(RATE).forEach(function (k) { q[k] = Math.max(q[k] || 0, 2); }); paintAll(); }
+    else { clearQueues(); }
+    clearTokens();
+  }
+  function startSim() { running = true; last = Date.now(); clearTimeout(tickT); clearTimeout(spawnT); tick(); loopSpawn(); }
+  speed.addEventListener('click', function () { if (!after) setPipe(true); });
+  $('#ov-reset').addEventListener('click', function () { setPipe(false); });
+  clearQueues();
+  if (PB.reduced) { setPipe(true); }
+  else {
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }, { threshold: 0.2 }).observe(pipe);
+    } else { visible = true; }
+    startSim();
+    inView(pipe, function () { setTimeout(function () { if (!after) setPipe(true); }, 2200); }, 0.55);
+  }
+
+  /* 2. Line becomes a loop */
+  var host = $('#ov-svg-host'), flow = $('#ov-flow'), stat = $('#ov-flowstat');
+  (function build() {
+    var names = ['Plan', 'Design', 'Build', 'Test', 'Deploy', 'Maintain'];
+    var files = ['intent.md', 'spec.md', 'plan.md', 'diff + tests', 'PR + review', 'incident record'];
+    var CX = 300, CY = 200, R = 140, NR = 38, deg = Math.PI / 180;
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '-24 0 648 400'); svg.setAttribute('aria-hidden', 'true');
+    function mk(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; }
+    var defs = mk('defs', {});
+    defs.innerHTML = '<marker id="ov-ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0d9488"/></marker><marker id="ov-ahf" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#d97706"/></marker>';
+    mk('line', { 'class': 'ov-hline', x1: 60, y1: 200, x2: 540, y2: 200 });
+    var lab = mk('text', { 'class': 'ov-hlab', x: 300, y: 138 }); lab.textContent = 'Handoffs by document, ticket and sign-off';
+    function ang(i) { return (-90 + 60 * i) * deg; }
+    var i, j, k;
+    for (i = 0; i < 6; i++) {
+      var a1 = ang(i) + 17 * deg, a2 = ang(i + 1) - 17 * deg, fb = i === 5;
+      mk('path', { 'class': 'ov-arc' + (fb ? ' fb' : ''), pathLength: 1, style: '--i:' + i,
+        'marker-end': 'url(#' + (fb ? 'ov-ahf' : 'ov-ah') + ')',
+        d: 'M' + (CX + R * Math.cos(a1)) + ' ' + (CY + R * Math.sin(a1)) + ' A' + R + ' ' + R + ' 0 0 1 ' + (CX + R * Math.cos(a2)) + ' ' + (CY + R * Math.sin(a2)) });
+    }
+    var mid = mk('text', { 'class': 'ov-mid', x: CX, y: CY - 8 }); mid.textContent = 'Production';
+    var mid2 = mk('text', { 'class': 'ov-mid', x: CX, y: CY + 16 }); mid2.textContent = 'feeds planning';
+    for (j = 0; j < 6; j++) {
+      var ca = (-60 + 60 * j) * deg, cc = Math.cos(ca), cs = Math.sin(ca);
+      var w = files[j].length * 8.6 + 22, endSide = cc < -0.1, startSide = cc > 0.1;
+      var ox = (R + 62) * cc, oy = (R + 62) * cs;
+      var g = mk('g', { 'class': 'ov-chip', style: '--i:' + j + ';--lx:' + (110 + 96 * j) + 'px;--ly:200px;--cx:' + (CX + ox) + 'px;--cy:' + (CY + oy) + 'px' });
+      var rx = endSide ? -w : (startSide ? 0 : -w / 2);
+      mk('rect', { x: rx, y: -13, width: w, height: 26, rx: 7 }, g);
+      var tx = mk('text', { x: rx + w / 2, y: 1 }, g); tx.textContent = files[j];
+    }
+    for (k = 0; k < 6; k++) {
+      var gx = mk('g', { 'class': 'ov-fn', style: '--i:' + k + ';--lx:' + (62 + 95.2 * k) + 'px;--ly:200px;--cx:' + (CX + R * Math.cos(ang(k))) + 'px;--cy:' + (CY + R * Math.sin(ang(k))) + 'px' });
+      mk('circle', { r: NR }, gx);
+      var t = mk('text', {}, gx); t.textContent = names[k];
+    }
+    host.appendChild(svg);
+  })();
+  var flowT = [];
+  var STAT = ['Today: a chain of handoffs between roles.', 'AI-native: each stage leaves a file the next stage reads.', 'Production feedback flows back into planning.'];
+  function flowTo(s) {
+    flow.setAttribute('data-mode', s >= 1 ? 'loop' : 'line');
+    flow.classList.toggle('drawn', s >= 2);
+    flow.classList.toggle('fbk', s >= 3);
+    stat.textContent = s >= 3 ? STAT[2] : STAT[Math.min(s, 1)];
+  }
+  function playFlow() {
+    flowT.forEach(clearTimeout); flowT = [];
+    if (PB.reduced) { flowTo(3); return; }
+    flowTo(0);
+    [[1200, 1], [2400, 2], [4000, 3]].forEach(function (s) { flowT.push(setTimeout(function () { flowTo(s[1]); }, s[0])); });
+  }
+  $('#ov-replay').addEventListener('click', playFlow);
+  if (PB.reduced) flowTo(3); else inView(flow, playFlow, 0.5);
+
+  /* 4. Gates */
+  var gt = $('#ov-gates');
+  if (PB.reduced) gt.classList.add('in'); else inView(gt, function () { gt.classList.add('in'); }, 0.35);
+})();
+</script>
+
+</body>
+</html>

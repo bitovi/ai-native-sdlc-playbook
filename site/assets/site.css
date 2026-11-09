@@ -1,0 +1,56 @@
+/* Site chrome: header, footer, breadcrumb. Page styles live in playbook.css. */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body { font-family: "Lato", system-ui, sans-serif; color: #374151; background: #ffffff; line-height: 1.75; }
+:root {
+    --brand-red: #ca2f35; --brand-red-hover: #b22a2f;
+    --text-dark: #15295a; --heading-dark: #111827;
+    --body-text: #374151; --body-light: #6b7280;
+    --bg-light: #f9fafb; --border-light: #e5e7eb;
+    --footer-bg: #131627; --footer-text: #9ca3af;
+}
+.site-header {
+    position: sticky; top: 0; z-index: 100; background: #fff;
+    border-bottom: 3px solid var(--brand-red);
+    padding: 0 40px; height: 68px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.header-logo { display: flex; align-items: center; text-decoration: none; }
+.header-logo svg { height: 32px; width: auto; }
+.header-nav { display: flex; align-items: center; gap: 32px; list-style: none; }
+.header-nav a {
+    font-family: "Lato", sans-serif; font-size: 15px; font-weight: 700;
+    color: var(--text-dark); text-decoration: none; transition: color 0.2s;
+}
+.header-nav a:hover { color: var(--brand-red); }
+.site-footer {
+    background: var(--footer-bg); color: var(--footer-text); padding: 40px;
+    text-align: center; font-size: 14px;
+}
+.site-footer a { color: var(--footer-text); text-decoration: none; }
+.site-footer a:hover { color: #fff; }
+.breadcrumb-bar {
+    background: var(--bg-light); border-bottom: 1px solid var(--border-light);
+}
+.breadcrumb {
+    max-width: 1100px; margin: 0 auto; padding: 12px 40px;
+    font-family: 'Lato', sans-serif; font-size: 13px;
+    color: var(--body-light); display: flex; align-items: center; gap: 0;
+}
+.breadcrumb a {
+    color: var(--body-light); text-decoration: none; transition: color 0.15s;
+}
+.breadcrumb a:hover { color: var(--brand-red); }
+.breadcrumb .sep {
+    margin: 0 10px; font-size: 11px; opacity: 0.4;
+    display: inline-block; transform: translateY(-0.5px);
+}
+.breadcrumb .current {
+    color: var(--text-dark); font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 768px) {
+    .site-header { padding: 0 16px; }
+    .header-nav { display: none; }
+    .breadcrumb { padding: 10px 16px; font-size: 12px; }
+}

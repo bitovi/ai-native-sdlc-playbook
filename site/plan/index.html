@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1: Plan | Bitovi</title>
+<meta name="description" content="Capture what you want as intent.md, in the originator's own words, in hours.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+.plan-chain { display: grid; gap: 10px; }
+.plan-chain .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.plan-box { background: #fff; border: 1px dashed var(--pb-old); border-radius: 10px; padding: 8px 12px; font-family: var(--pb-display); font-weight: 600; font-size: 14px; color: var(--pb-body); }
+.plan-hand { font-size: 13px; color: var(--pb-muted); }
+.plan-newflow { display: grid; gap: 12px; }
+.plan-newflow .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.plan-newflow .arr { color: var(--pb-agent); font-weight: 800; }
+
+/* three ways in */
+.plan-in { display: grid; grid-template-columns: minmax(0, 1fr) 120px minmax(0, .8fr); align-items: center; gap: 0; }
+.plan-srcs { display: grid; gap: 14px; }
+.plan-src { display: flex; gap: 14px; align-items: flex-start; background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: var(--pb-shadow); }
+.plan-src .ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--pb-human-bg); color: var(--pb-human); }
+.plan-src.alert .ic { background: var(--pb-gate-bg); color: var(--pb-gate); }
+.plan-src.ticket .ic { background: var(--pb-old-bg); color: var(--pb-muted); }
+.plan-src h3 { font-size: 17px; }
+.plan-src p { font-size: 15px; margin-top: 2px; }
+.plan-src a { color: inherit; }
+.plan-wires { width: 100%; height: 260px; display: block; }
+.plan-wires path { vector-effect: non-scaling-stroke; fill: none; stroke: var(--pb-agent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s var(--pb-ease); }
+.plan-in.in .plan-wires path { stroke-dashoffset: 0; }
+.plan-in.in .plan-wires path:nth-child(2) { transition-delay: .25s; }
+.plan-in.in .plan-wires path:nth-child(3) { transition-delay: .5s; }
+.plan-target { background: var(--pb-ink); color: #e2e8f0; border-radius: 16px; padding: 22px; display: grid; gap: 10px; justify-items: start; }
+.plan-target p { font-size: 15px; }
+
+/* the play card */
+.plan-steps { padding: 22px 28px 26px; background: var(--pb-soft); border-bottom: 1px solid var(--pb-line); }
+.plan-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.plan-nav button { font: inherit; text-align: left; border: 0; border-top: 4px solid var(--pb-line); border-radius: 0 0 10px 10px; background: #fff; padding: 8px 10px; cursor: pointer; font-size: 14px; line-height: 1.3; color: var(--pb-ink); font-family: var(--pb-display); font-weight: 600; }
+.plan-nav button b { display: block; font-size: 12px; color: var(--pb-muted); }
+.plan-nav button.on { border-top-color: var(--pb-red); box-shadow: var(--pb-shadow); }
+.plan-nav button.done { border-top-color: var(--pb-agent); }
+.plan-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; margin-top: 18px; align-items: start; }
+.plan-chat { display: grid; gap: 10px; align-content: start; min-height: 120px; }
+.plan-b { max-width: 92%; padding: 10px 14px; border-radius: 14px; font-size: 15px; line-height: 1.45; opacity: 0; transform: translateY(10px); transition: opacity .45s, transform .45s var(--pb-ease); }
+.plan-b.show { opacity: 1; transform: none; }
+.plan-b .chip { margin-bottom: 4px; }
+.plan-b.human { background: var(--pb-human-bg); color: #7f1d36; justify-self: start; border-bottom-left-radius: 4px; }
+.plan-b.agent { background: var(--pb-agent-bg); color: #115e59; justify-self: end; border-bottom-right-radius: 4px; }
+.plan-b.note { background: #fff; border: 1px solid var(--pb-line); color: var(--pb-body); justify-self: stretch; max-width: 100%; }
+.plan-b:not(.show) { height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; margin: -5px 0; }
+.plan-doc { background: #fff; border: 1.5px solid var(--pb-file-bg); border-radius: 12px; padding: 16px 18px; box-shadow: var(--pb-shadow); font-size: 15px; line-height: 1.5; position: relative; }
+.plan-doc .bar { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.plan-doc h4 { font-size: 16px; }
+.plan-meta { font-size: 13px; color: var(--pb-muted); }
+.plan-skel { display: grid; gap: 8px; }
+.plan-skel i { display: block; height: 10px; border-radius: 5px; background: var(--pb-line); }
+.plan-skel i:nth-child(2) { width: 80%; } .plan-skel i:nth-child(3) { width: 55%; }
+.plan-sec { padding: 8px 10px; margin: 0 -10px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: opacity .45s, transform .45s var(--pb-ease), background .3s; transition-delay: calc(var(--i, 0) * .16s); }
+.plan-sec.show { opacity: 1; transform: none; }
+.plan-sec:not(.show) { display: none; }
+.plan-sec b { display: block; font-family: var(--pb-display); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-file); }
+.plan-sec p { font-size: 15px; }
+.plan-sec.q b::after { content: "  (open)"; text-transform: none; letter-spacing: 0; color: var(--pb-muted); font-weight: 600; }
+.plan-doc.edit .plan-sec.show { background: #fff1f2; transition-delay: 0s; }
+.plan-note { margin-top: 10px; font-size: 14px; }
+.plan-note.gone, .gone { display: none; }
+.plan-home { margin-top: 12px; border: 1.5px dashed var(--pb-file); border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14px; opacity: 0; transform: translateY(12px); transition: opacity .5s, transform .6s var(--pb-ease); }
+.plan-home.show { opacity: 1; transform: none; }
+.plan-home:not(.show) { display: none; }
+.plan-cap { margin-top: 16px; font-size: 16px; color: var(--pb-ink); min-height: 3.2em; }
+.plan-cap .pb-chip { margin-right: 6px; }
+
+/* measure bars */
+.plan-bars { display: grid; gap: 12px; margin-bottom: 18px; }
+.plan-bar { display: grid; gap: 4px; font-size: 14px; }
+.plan-bar i { display: block; height: 14px; border-radius: 7px; width: 0; transition: width 1.2s var(--pb-ease) .2s; }
+.plan-bar.old i { background: var(--pb-old); }
+.plan-bar.new i { background: var(--pb-agent); }
+.in .plan-bar.old i, .plan-bars.in .plan-bar.old i { width: 100%; }
+.in .plan-bar.new i, .plan-bars.in .plan-bar.new i { width: 7%; }
+
+/* hand off */
+.plan-hand-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); gap: 0; align-items: center; }
+.plan-hand-row .col { background: var(--pb-navy-2); border-radius: 16px; padding: 22px; display: grid; gap: 10px; justify-items: start; }
+.plan-hand-row .col p { color: #cbd5e1; font-size: 15px; }
+.plan-hand-row svg { width: 100%; height: 60px; }
+.plan-hand-row path.l { fill: none; stroke: #5eead4; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s var(--pb-ease) .2s; }
+.plan-hand-row.in path.l { stroke-dashoffset: 0; }
+.plan-hand-row path.h { fill: #5eead4; opacity: 0; transition: opacity .3s 1s; }
+.plan-hand-row.in path.h { opacity: 1; }
+.plan-hand-row .pb-btn { margin-top: 6px; }
+
+@media (max-width: 960px) {
+  .plan-stage { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .plan-in { grid-template-columns: 1fr; gap: 10px; }
+  .plan-wires { display: none; }
+  .plan-nav { grid-template-columns: repeat(5, minmax(46px, 1fr)); }
+  .plan-nav button span { display: none; }
+  .plan-steps { padding: 18px 14px 22px; }
+  .plan-hand-row { grid-template-columns: 1fr; }
+  .plan-hand-row svg { transform: rotate(90deg); height: 50px; }
+}
+[data-step="3"] .plan-sec.show { background: #fff1f2; transition-delay: 0s; }
+.plan-stage > *, .plan-doc, .plan-b { min-width: 0; }
+.plan-b .pb-chip { white-space: normal; }
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 1: Plan</h1>
+        <p class="lead">Capture what you want as intent.md, in the originator's own words, in hours.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <!-- Shift -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The shift</span>
+        <h2>From a chain of handoffs to one document</h2>
+        <p class="pb-lede">Today an idea changes hands again and again before engineering sees it. In the AI-native way, the person with the idea writes it down with Claude, and that document is what moves on.</p>
+        <div class="pb-legend">
+          <span class="pb-chip human">A person decides</span>
+          <span class="pb-chip agent">Claude does the work</span>
+          <span class="pb-chip gate">A gate or control</span>
+          <span class="pb-file">intent.md</span>
+          <span class="pb-chip old">The traditional way</span>
+        </div>
+      </div>
+      <div class="pb-shift">
+        <div class="old pb-reveal">
+          <span class="pb-chip old">Traditional</span>
+          <h3 style="margin-top:10px">An idea passes through many hands</h3>
+          <div class="plan-chain">
+            <div class="row pb-reveal d1"><span class="plan-box">Backlog entry</span><span class="plan-hand">owner changes</span></div>
+            <div class="row pb-reveal d2"><span class="plan-box">User stories</span><span class="plan-hand">owner changes</span></div>
+            <div class="row pb-reveal d3"><span class="plan-box">Story points</span><span class="plan-hand">owner changes</span></div>
+            <div class="row pb-reveal d4"><span class="plan-box">Refinement meetings</span><span class="plan-hand">owner changes</span></div>
+          </div>
+          <p style="margin-top:14px">What reaches engineering is "several steps removed" from what the originator meant.</p>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div class="new pb-reveal d2">
+          <span class="pb-chip agent">AI-native</span>
+          <h3 style="margin-top:10px">The originator keeps the pen</h3>
+          <div class="plan-newflow">
+            <div class="row pb-reveal d2"><span class="pb-chip human">Originator</span><span class="arr" aria-hidden="true">&harr;</span><span class="pb-chip agent">Claude</span></div>
+            <div class="row pb-reveal d3"><span class="arr" aria-hidden="true">&darr;</span><span class="pb-file">intent.md</span></div>
+            <div class="row pb-reveal d4"><span class="pb-chip human">Product owner reviews and corrects</span></div>
+          </div>
+          <p style="margin-top:14px">A "proto-spec in the originator's own terms": what is wanted, why, and under which constraints. It is human readable and machine actionable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Three ways in -->
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Three ways in</span>
+        <h2>Every intent starts somewhere different and ends up in the same place</h2>
+        <p class="pb-lede">Whatever the route, the product owner reviews and corrects the agent-written <span class="pb-file">intent.md</span> before it is committed.</p>
+      </div>
+      <div class="plan-in pb-reveal">
+        <div class="plan-srcs">
+          <div class="plan-src"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.4 1 2.5h6c0-1.1.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg></span><div><h3>A person has an idea</h3><p>They describe it to Claude in their own words.</p></div></div>
+          <div class="plan-src ticket"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M13 6v12" stroke-dasharray="2 3"/></svg></span><div><h3>A ticket is filed</h3><p>The request becomes the starting point for the same conversation.</p></div></div>
+          <div class="plan-src alert"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><div><h3>An alert is raised</h3><p>An incident surfaces from production. <a href="{{BP}}/maintain/">Stage 6 (Maintain)</a> covers how.</p></div></div>
+        </div>
+        <svg class="plan-wires" viewBox="0 0 120 260" preserveAspectRatio="none" aria-hidden="true">
+          <path pathLength="1" d="M0 45 C60 45 60 130 120 130"/>
+          <path pathLength="1" d="M0 130 L120 130"/>
+          <path pathLength="1" d="M0 215 C60 215 60 130 120 130"/>
+        </svg>
+        <div class="plan-target">
+          <span class="pb-file">intent.md</span>
+          <p>One Markdown file with the same sections every time. Version controlled. Ready for the next stage.</p>
+          <span class="pb-chip human">Product owner reviews first</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Play -->
+  <section class="pb-section" id="play">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The play</span>
+        <h2>Capture as intent.md</h2>
+        <p class="pb-lede">Step through it first. The conversation is on the left and the document grows on the right. It uses the course's example: an insurer's claims status self-service.</p>
+      </div>
+      <div class="pb-play pb-reveal" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">1</div>
+          <div>
+            <h3>Capture as intent.md</h3>
+            <p>An originator brainstorms with Claude. The result is a committed proto-spec the product owner has already corrected.</p>
+          </div>
+        </div>
+
+        <div class="plan-steps" data-pb-steps>
+          <div class="plan-nav" role="group" aria-label="Steps">
+            <button type="button" class="pb-step" data-pb-goto="0"><b>1</b><span>Describe the problem</span></button>
+            <button type="button" class="pb-step" data-pb-goto="1"><b>2</b><span>Brainstorm</span></button>
+            <button type="button" class="pb-step" data-pb-goto="2"><b>3</b><span>Write intent.md</span></button>
+            <button type="button" class="pb-step" data-pb-goto="3"><b>4</b><span>Correct it</span></button>
+            <button type="button" class="pb-step" data-pb-goto="4"><b>5</b><span>Commit it</span></button>
+          </div>
+          <div class="plan-stage">
+            <div class="plan-chat" aria-label="The conversation">
+              <div class="plan-b human" data-at="0"><span class="pb-chip human">Originator</span><br>Customers phone us to ask where their claim is. I want them to see it in the portal.</div>
+              <div class="plan-b agent" data-at="1"><span class="pb-chip agent">Claude</span><br>Who is affected? What are the limits? What does success look like?</div>
+              <div class="plan-b human" data-at="1"><span class="pb-chip human">Originator</span><br>Answers until the idea is concrete.</div>
+              <div class="plan-b agent" data-at="2"><span class="pb-chip agent">Claude</span><br>Writing intent.md with the org template: five sections.</div>
+              <div class="plan-b note" data-at="3"><span class="pb-chip human">Originator</span> corrects any misunderstanding before anything is committed.</div>
+              <div class="plan-b note" data-at="4"><span class="pb-chip human">Product owner</span> picks it up and accepts it into Stage 2 or closes it.</div>
+            </div>
+            <div>
+              <div class="plan-doc" data-at="0" id="plan-doc">
+                <div class="bar"><span class="pb-file">intent.md</span><span class="pb-chip old">Status: draft</span></div>
+                <div class="plan-skel" data-at="0" data-until="2" aria-hidden="true"><i></i><i></i><i></i></div>
+                <div class="plan-sec show" data-at="2" style="--i:0"><h4>Intent: claims status self-service</h4><span class="plan-meta">Author: J. Ortiz, claims operations</span></div>
+                <div class="plan-sec" data-at="2" style="--i:1"><b>Problem</b><p>Customers phone the contact center to ask where their claim is. Handlers spend roughly a third of call time on status-only queries.</p></div>
+                <div class="plan-sec" data-at="2" style="--i:2"><b>Proposed outcome</b><p>Customers see claim status, next step and expected date in the portal.</p></div>
+                <div class="plan-sec" data-at="2" style="--i:3"><b>Affected users and systems</b><p>Claims handlers, the portal team, the claims-core API.</p></div>
+                <div class="plan-sec" data-at="2" style="--i:4"><b>Constraints</b><p>No new PII in the portal session. Existing authentication only.</p></div>
+                <div class="plan-sec q" data-at="2" style="--i:5"><b>Open questions</b><p>Do third-party loss adjusters need access too?</p></div>
+              </div>
+              <div class="plan-home" data-at="4"><span class="pb-file">intent/</span><span>in the product repo, read by the product owner.</span><span class="pb-chip gate">Author and timestamp join the record</span></div>
+            </div>
+          </div>
+          <p class="plan-cap" data-only="0"><span class="pb-chip human">Originator</span>Describes the problem in their own words: what they cannot do today, who is affected, what better looks like, what is out of scope. No formal language needed.</p>
+          <p class="plan-cap" data-only="1" hidden><span class="pb-chip agent">Claude</span>Asks the analyst's questions: scope, users, constraints and what success looks like. They keep going until it is concrete.</p>
+          <p class="plan-cap" data-only="2" hidden><span class="pb-chip agent">Claude</span>Writes intent.md using the org's template. The template can be encoded as a skill. It covers problem, proposed outcome, affected users and systems, constraints and open questions.</p>
+          <p class="plan-cap" data-only="3" hidden><span class="pb-chip human">Originator</span>Reads the draft and fixes anything Claude got wrong. The product owner reviews it too.</p>
+          <p class="plan-cap" data-only="4" hidden><span class="pb-chip gate">Commit</span>The file goes to the shared intent home. The accept or reject decision that sends it into Stage 2 is recorded as the merge or the closing review.</p>
+          <div class="pb-steps-ui">
+            <button type="button" class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+            <button type="button" class="pb-btn red" data-pb-play>&#9654; Play</button>
+            <button type="button" class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+            <span class="pb-status" data-pb-status aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div role="tablist" aria-label="Capture as intent.md">
+          <button role="tab" id="pt1" aria-controls="pp1" aria-selected="true" type="button">What changes</button>
+          <button role="tab" id="pt2" aria-controls="pp2" aria-selected="false" tabindex="-1" type="button">Getting started</button>
+          <button role="tab" id="pt3" aria-controls="pp3" aria-selected="false" tabindex="-1" type="button">How to run it</button>
+          <button role="tab" id="pt4" aria-controls="pp4" aria-selected="false" tabindex="-1" type="button">Governance</button>
+          <button role="tab" id="pt5" aria-controls="pp5" aria-selected="false" tabindex="-1" type="button">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="pp1" aria-labelledby="pt1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><h3>Several steps removed</h3><p>An idea goes through backlog entries, user stories, story points and refinement meetings. Ownership transfers at each handoff.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><h3>A proto-spec in the originator's terms</h3><p>The originator brainstorms with Claude and writes the result as intent.md. It holds what is wanted, why, and under which constraints. Repeat processes are encoded as skills.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="pp2" aria-labelledby="pt2" hidden>
+          <div class="pb-grid">
+            <div class="pb-card file"><h3>Prerequisites</h3><p>None. You can start with the next item.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul style="margin:0;padding-left:18px"><li>Claude access for non-engineers (claude.ai or Cowork)</li><li>An agreed intent.md template</li><li>A shared, version-controlled home for intent that the product owner watches</li></ul></div>
+            <div class="pb-card"><h3>The intent home</h3><p>The simplest home is an <code>intent/</code> folder in the product repo. A dedicated intent repo only pays off when intent spans many repos. In a monorepo it is a directory.</p><p>A technical person stands it up once and decides who can write to it. Contributors without Git experience can skip Git: a connector such as GitHub lets Claude commit the Markdown for them.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="pp3" aria-labelledby="pt3" hidden>
+          <ol class="pb-list">
+            <li><span><span class="pb-chip human">Originator</span> describes the problem in their own words.</span></li>
+            <li><span><span class="pb-chip agent">Claude</span> brainstorms with them until it is concrete, asking about scope, users, constraints and success.</span></li>
+            <li><span><span class="pb-chip agent">Claude</span> writes <span class="pb-file">intent.md</span> using the org template.</span></li>
+            <li><span><span class="pb-chip human">Originator</span> corrects any misunderstanding.</span></li>
+            <li><span><span class="pb-chip gate">Commit</span> to the shared home. Author and timestamp join the record. The product owner picks it up.</span></li>
+          </ol>
+          <p style="margin-top:14px" class="pb-source">The step-through above shows each of these moving between the people and Claude.</p>
+        </div>
+        <div role="tabpanel" id="pp4" aria-labelledby="pt4" hidden>
+          <div class="pb-grid four">
+            <div class="pb-card human"><span class="pb-chip human">Originator</span><p>Any person, or an agent or alert. Drafts with Claude and corrects it.</p></div>
+            <div class="pb-card human"><span class="pb-chip human">Product owner</span><p>Reviews, approves, and accepts or closes the intent.</p></div>
+            <div class="pb-card gate"><span class="pb-chip gate">Platform or engineering</span><p>Sets up the intent home and decides who can write to it.</p></div>
+            <div class="pb-card gate"><span class="pb-chip gate">A lead</span><p>Signs off the template skill.</p></div>
+          </div>
+          <p style="margin-top:16px"><b>Evidence:</b> the committed <span class="pb-file">intent.md</span> with author, timestamp and full revision history in the Git history of the intent home.</p>
+        </div>
+        <div role="tabpanel" id="pp5" aria-labelledby="pt5" hidden>
+          <div class="plan-bars pb-reveal" role="img" aria-label="Time to a committed intent.md falls from a multi-week cycle to hours.">
+            <div class="plan-bar old"><span>Traditional: a multi-week elicitation and refinement cycle</span><i></i></div>
+            <div class="plan-bar new"><span>AI-native: hours</span><i></i></div>
+          </div>
+          <div class="pb-metric">
+            <div><b>Leading</b>Time from the first conversation to a committed intent.md, read from Git history.</div>
+            <div><b>Lagging</b>Survival rate: the share of intent.md files the product owner accepts into Stage 2 rather than closes. Also the count of changes to intent.md after the first spec.md commit for the same change.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hand off -->
+  <section class="pb-section dark">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker" style="color:#fda4af">What it hands on</span>
+        <h2>An accepted intent.md starts Stage 2</h2>
+        <p class="pb-lede">The stage ends when the product owner accepts the file. Acceptance is the trigger. Design begins by reading it.</p>
+      </div>
+      <div class="plan-hand-row pb-reveal">
+        <div class="col"><span class="pb-chip human">Product owner accepts</span><span class="pb-file">intent.md</span><p>Committed, with author, timestamp and history.</p></div>
+        <svg viewBox="0 0 90 60" aria-hidden="true"><path class="l" pathLength="1" d="M6 30 H76"/><path class="h" d="M72 22 L86 30 L72 38 Z"/></svg>
+        <div class="col"><span class="pb-chip agent">Triggers</span><h3>Requirements and design</h3><p>Claude produces a spec from the intent, guided by your skills.</p><a class="pb-btn red" href="{{BP}}/design/">Go to Stage 2: Design &rarr;</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Takeaways -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-takeaways pb-reveal">
+        <h3>Key takeaways</h3>
+        <ul>
+          <li>intent.md is a proto-spec in the originator's own terms. It can start from an idea, a ticket or an alert.</li>
+          <li>Claude asks the analyst's questions, so the originator does not hand the idea to a chain of owners.</li>
+          <li>The product owner reviews and corrects it before it is committed. Humans make the accept or close call.</li>
+          <li>The setup is small: Claude access, a template, and a shared intent home.</li>
+          <li>Measure time to a committed intent.md, and the share the product owner accepts.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+<!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  function bind(root) {
+    function apply(n) {
+      [].forEach.call(root.querySelectorAll('[data-at]'), function (x) {
+        var at = +x.getAttribute('data-at'), un = x.getAttribute('data-until');
+        x.classList.toggle('show', at <= n);
+        x.classList.toggle('cur', at === n);
+        x.classList.toggle('gone', un !== null && n >= +un);
+      });
+      [].forEach.call(root.querySelectorAll('[data-only]'), function (x) {
+        x.hidden = +x.getAttribute('data-only') !== n;
+      });
+    }
+    root.addEventListener('pb:step', function (e) { apply(e.detail); });
+    var s = root.getAttribute('data-step'); if (s !== null) apply(+s);
+    root.addEventListener('keydown', function (e) {
+      if (!e.target.closest('button')) return;
+      var b = e.key === 'ArrowRight' ? root.querySelector('[data-pb-next]') : e.key === 'ArrowLeft' ? root.querySelector('[data-pb-prev]') : null;
+      if (b && !b.disabled) { e.preventDefault(); b.click(); }
+    });
+  }
+  [].forEach.call(document.querySelectorAll('[data-pb-steps]'), bind);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 4: Test | Bitovi</title>
+<meta name="description" content="Give Claude a feedback loop, and run evals continuously in CI.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+/* Test page only */
+.tst-bars { display: grid; gap: 14px; margin-top: 16px; }
+.tst-bar-row small { display: block; font-size: 13px; margin-bottom: 4px; }
+.tst-bar { position: relative; height: 12px; border-radius: 999px; background: rgba(148,163,184,.25); }
+.tst-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; background: var(--pb-old); transition: width 1.4s var(--pb-ease) .3s; }
+.tst-bar.fast i { background: var(--pb-agent); }
+.in .tst-bar i { width: var(--w); }
+.tst-ticks { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; margin-top: 4px; }
+.pb-play + .pb-play { margin-top: 40px; }
+.tst-demo { border-top: 1px solid var(--pb-line); padding: 26px 28px 30px; background: var(--pb-soft); }
+.tst-demo h4 { font-size: 18px; margin-bottom: 4px; }
+.tst-demo > p { color: var(--pb-muted); font-size: 15px; }
+.tst-stage { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; margin-top: 18px; align-items: start; }
+.tst-svg { width: 100%; height: auto; display: block; background: #fff; border-radius: 16px; border: 1px solid var(--pb-line); }
+.tst-node rect { fill: #fff; stroke: var(--pb-line); stroke-width: 2; transition: fill .35s, stroke .35s; }
+.tst-node text { font-family: var(--pb-display); font-weight: 700; font-size: 13px; fill: var(--pb-ink); text-anchor: middle; }
+.tst-node .sub { font-size: 10.5px; font-weight: 600; fill: var(--pb-muted); }
+.tst-node.on rect { fill: var(--pb-agent-bg); stroke: var(--pb-agent); }
+.tst-node.hum.on rect { fill: var(--pb-human-bg); stroke: var(--pb-human); }
+.tst-node.file.on rect { fill: var(--pb-file-bg); stroke: var(--pb-file); }
+.tst-node.done rect { stroke: var(--pb-agent); }
+.tst-edge { fill: none; stroke: var(--pb-line); stroke-width: 3; transition: stroke .35s; }
+.tst-edge.lit { stroke: var(--pb-agent); }
+.tst-edge.rep { stroke-dasharray: 5 6; }
+.tst-edge-label { font-family: var(--pb-display); font-size: 10.5px; font-weight: 600; fill: var(--pb-muted); text-anchor: middle; }
+.tst-token { fill: var(--pb-red); stroke: #fff; stroke-width: 3; transition: transform .7s var(--pb-ease); }
+.tst-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tst-list li { border: 1px solid var(--pb-line); background: #fff; border-radius: 12px; padding: 10px 14px; }
+.tst-list li.on { border-color: var(--pb-ink); box-shadow: var(--pb-shadow); }
+.tst-sb { font: inherit; font-family: var(--pb-display); font-weight: 700; font-size: 15px; color: var(--pb-ink); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; display: flex; gap: 10px; align-items: center; width: 100%; }
+.tst-sb b { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--pb-old-bg); color: var(--pb-muted); font-size: 12px; display: grid; place-items: center; }
+.tst-list li.on .tst-sb b { background: var(--pb-red); color: #fff; }
+.tst-list li.done .tst-sb b { background: var(--pb-agent); color: #fff; }
+.tst-list p { font-size: 15px; margin: 4px 0 0 34px; display: none; }
+.tst-list li.on p { display: block; animation: pb-fade .35s var(--pb-ease); }
+.tst-term { margin-top: 14px; background: var(--pb-navy); color: #e2e8f0; border-radius: 12px; padding: 14px 16px; font-family: var(--pb-mono); font-size: 13px; line-height: 1.6; min-height: 92px; overflow-wrap: anywhere; }
+.tst-term .ok { color: #5eead4; } .tst-term .bad { color: #fda4af; } .tst-term .dim { color: #94a3b8; }
+.tst-term div { animation: pb-fade .35s var(--pb-ease) both; }
+.tst-run { display: grid; gap: 12px; }
+.tst-trig { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.tst-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid var(--pb-line); border-radius: 12px; padding: 10px 14px; font-family: var(--pb-mono); font-size: 13px; opacity: .25; transform: translateX(-10px); transition: opacity .4s, transform .4s var(--pb-ease), border-color .3s; overflow-wrap: anywhere; }
+.tst-row.show { opacity: 1; transform: none; }
+.tst-row .st { font-family: var(--pb-display); font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--pb-old-bg); color: var(--pb-muted); }
+.tst-row.pass .st { background: var(--pb-agent-bg); color: var(--pb-agent); }
+.tst-row.fail { border-color: var(--pb-human); }
+.tst-row.fail .st { background: var(--pb-human-bg); color: var(--pb-human); }
+.tst-row .why { flex-basis: 100%; font-family: var(--pb-text); font-size: 13px; color: var(--pb-human); display: none; }
+.tst-row.fail .why { display: block; }
+.tst-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; max-width: 360px; }
+.tst-grid i { aspect-ratio: 1; border-radius: 4px; background: var(--pb-old-bg); transition: background .3s; }
+.tst-grid i.p { background: var(--pb-agent); } .tst-grid i.f { background: var(--pb-human); }
+.tst-merge { display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: 10px; font-family: var(--pb-display); font-weight: 700; font-size: 14px; background: var(--pb-old-bg); color: var(--pb-muted); transition: background .3s, color .3s; width: fit-content; }
+.tst-merge.red { background: var(--pb-human-bg); color: var(--pb-human); }
+.tst-merge.green { background: var(--pb-agent-bg); color: var(--pb-agent); }
+.tst-merge.amber { background: var(--pb-gate-bg); color: var(--pb-gate); }
+.tst-lines { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tst-lines li { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.tst-lines li > span:last-child { flex: 1 1 14em; }
+.tst-hand { display: grid; grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr); align-items: stretch; }
+.tst-hand > div { border-radius: 16px; padding: 22px; background: #fff; box-shadow: var(--pb-shadow); display: flex; flex-direction: column; gap: 10px; }
+.tst-hand .go { background: none; box-shadow: none; padding: 0; display: grid; place-items: center; }
+.tst-hand .go svg { width: 70px; height: 28px; }
+.tst-hand .go path { stroke: var(--pb-agent); stroke-width: 3; fill: none; stroke-dasharray: 10 8; animation: pb-flow 2.4s linear infinite; }
+.tst-hand h3 { font-size: 18px; }
+.tst-note { margin-top: 14px; font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .tst-hand .go path { animation: none; } }
+@media (max-width: 860px) { .tst-stage { grid-template-columns: 1fr; } .tst-svg { max-width: 400px; margin: 0 auto; } }
+@media (max-width: 640px) {
+  .tst-demo { padding: 22px 16px 26px; }
+  .tst-hand { grid-template-columns: 1fr; gap: 8px; }
+  .tst-hand .go { transform: rotate(90deg); height: 40px; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Stage 4: Test</h1>
+        <p class="lead">Give Claude a feedback loop, and run evals continuously in CI.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head">
+        <span class="pb-kicker">The shift</span>
+        <h2>From QA gates to checks that run all the time</h2>
+        <p class="pb-lede">When an agent writes the code, a late "does it work" signal turns a person into the bottleneck. Testing moves into the work itself.</p>
+      </div>
+      <div class="pb-shift pb-reveal">
+        <div class="old">
+          <span class="pb-chip old">Traditional</span>
+          <h3 style="margin-top:10px">QA gates at stage boundaries</h3>
+          <p>The signal arrives late, and a person has to check everything the agent produced.</p>
+          <div class="tst-bars">
+            <div class="tst-bar-row"><small>When you find out it works</small><div class="tst-bar" style="--w:100%"><i></i></div>
+              <div class="tst-ticks"><span>CI: minutes later</span><span>Tester: days later</span><span>Production: weeks later</span></div></div>
+          </div>
+        </div>
+        <div class="arrow" aria-hidden="true">&rarr;</div>
+        <div class="new">
+          <span class="pb-chip agent">AI-native</span>
+          <h3 style="margin-top:10px">Continuous evals woven through implementation</h3>
+          <p>The session checks its own work and iterates until the check passes. What reaches the engineer has already passed.</p>
+          <div class="tst-bars">
+            <div class="tst-bar-row"><small>When you find out it works</small><div class="tst-bar fast" style="--w:12%"><i></i></div>
+              <div class="tst-ticks"><span>Inside the session, before an engineer looks</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="pb-legend" aria-label="Legend">
+        <span class="pb-chip agent">Claude or an agent does the work</span>
+        <span class="pb-chip human">A person decides</span>
+        <span class="pb-chip gate">A gate or check</span>
+        <span class="pb-file">committed file</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-head">
+        <span class="pb-kicker">Two plays</span>
+        <h2>Check the work, then check the setup</h2>
+        <p class="pb-lede">Play 1 makes each session verify itself. Play 2 tests the agent's configuration the way you test code.</p>
+      </div>
+
+      <!-- PLAY 1 -->
+      <div class="pb-play pb-reveal" id="play-loop" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">1</div>
+          <div>
+            <h3>Give Claude a feedback loop</h3>
+            <p>"Always give Claude a way to verify its own work." A session checks and fixes its own work before an engineer sees it.</p>
+          </div>
+        </div>
+        <div role="tablist" aria-label="Feedback loop: five parts">
+          <button role="tab" id="l-t1" aria-controls="l-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="l-t2" aria-controls="l-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="l-t3" aria-controls="l-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="l-t4" aria-controls="l-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="l-t5" aria-controls="l-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="l-p1" aria-labelledby="l-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><p>The "does it work" signal comes late: CI minutes later, a tester days later, production weeks later. With an agent producing the code, someone must check all of it.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><p>The session runs the tests, runs the build, takes the screenshot, and iterates until the check passes. What reaches the engineer has already passed it. The engineer running the session sets up the loop.</p></div>
+          </div>
+          <p class="tst-note">The loop is not the same thing as the <b>verifier subagent</b> from Stage 3. The loop runs through the whole task, as many times as needed. The verifier is one way to package the final check, in a fresh context window, so its verdict is not colored by the assumptions that produced the code.</p>
+        </div>
+        <div role="tabpanel" id="l-p2" aria-labelledby="l-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3><p>None.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul style="margin:0;padding-left:18px"><li>A test suite and a build that each run locally with one command.</li><li>For UI work, a browser tool or a screenshot utility wired in through MCP.</li></ul></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="l-p3" aria-labelledby="l-t3" hidden>
+          <ol class="pb-list">
+            <li><span>Wrap the checks in one target, such as <code>make test</code>, that exits non-zero on failure.</span></li>
+            <li><span>List each command in the Commands section of <span class="pb-file">CLAUDE.md</span>, with an example of healthy output.</span></li>
+            <li><span>State a target you can measure: "All tests in test_status.py pass", or "the endpoint returns 200 with the new field".</span></li>
+            <li><span>For bug fixes, write the failing test first. Confirm it fails for the expected reason, commit it, then ask Claude to make it pass without editing the test. A test-file hook enforces that.</span></li>
+            <li><span>For UI work, close the loop visually: implement, screenshot, compare, adjust. Two or three rounds is normal.</span></li>
+            <li><span>Make verification part of "done" in <span class="pb-file">CLAUDE.md</span>: run the tests before reporting a task complete, and show the output.</span></li>
+            <li><span>Protect the loop. An agent fixing code must not weaken its own check. Block edits to test files during a fix task, or reject any diff that touches a test in review.</span></li>
+          </ol>
+          <p class="tst-note"><span class="pb-chip human">Engineer</span> sets up the loop and runs the session.</p>
+        </div>
+        <div role="tabpanel" id="l-p4" aria-labelledby="l-t4" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card gate"><h3>What is enforced</h3><p>Verification before done, and a block on editing test files during a fix. Both are hooks where you want a guarantee.</p></div>
+            <div class="pb-card file"><h3>Evidence</h3><p>The literal output of <code>make test</code>, the build log, or the screenshot diff, pasted by Claude.</p></div>
+            <div class="pb-card"><h3>Where it is logged</h3><p>The session transcript (forwarded by the OpenTelemetry export) and the PR check run.</p></div>
+            <div class="pb-card human"><h3>Who approves</h3><p>The code owner reviewing the PR. The mechanical evidence is attached, so they can focus on intent and risk.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="l-p5" aria-labelledby="l-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>First-pass CI success rate for agent-written changes.</div>
+            <div><b>Lagging</b>Review time per PR (from PR metadata), which should fall. Change failure rate (from the incident tracker).</div>
+          </div>
+        </div>
+
+        <div class="tst-demo" data-pb-steps id="demo-loop">
+          <h4>Watch the loop run</h4>
+          <p>One bug fix, from a failing test to a verified diff. Use Play, or the arrow keys on the step buttons.</p>
+          <div class="tst-stage">
+            <svg class="tst-svg" viewBox="0 0 360 400" role="img" aria-labelledby="loop-title loop-desc">
+              <title id="loop-title">The feedback loop</title>
+              <desc id="loop-desc">A bug starts with a failing test. Claude then cycles through running the check, reading the result and fixing the code until the check is green. A verifier in a fresh context checks the result, and a verified diff goes to the engineer.</desc>
+              <defs><marker id="tst-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+              <path class="tst-edge" data-s="1" d="M180 46 V62 H80 V80" marker-end="url(#tst-ar)"/>
+              <path class="tst-edge" data-s="2" d="M150 102 H210" marker-end="url(#tst-ar)"/>
+              <path class="tst-edge" data-s="3" d="M280 124 V190" marker-end="url(#tst-ar)"/>
+              <path class="tst-edge" data-s="4" d="M210 212 H150" marker-end="url(#tst-ar)"/>
+              <path class="tst-edge rep" data-s="99" d="M60 190 V124" marker-end="url(#tst-ar)"/>
+              <text class="tst-edge-label" x="48" y="162" transform="rotate(-90 48 162)">repeat</text>
+              <path class="tst-edge" data-s="5" d="M100 234 V307 H112" marker-end="url(#tst-ar)"/>
+              <path class="tst-edge" data-s="6" d="M190 329 V350" marker-end="url(#tst-ar)"/>
+              <g class="tst-node hum" data-s="0"><rect x="10" y="10" width="340" height="36" rx="10"/><text x="180" y="33">Bug? Write the failing test first</text></g>
+              <g class="tst-node" data-s="1"><rect x="10" y="80" width="140" height="44" rx="10"/><text x="80" y="98">1 Run the check</text><text class="sub" x="80" y="114">one command</text></g>
+              <g class="tst-node" data-s="2"><rect x="210" y="80" width="140" height="44" rx="10"/><text x="280" y="98">2 Read the result</text><text class="sub" x="280" y="114">what failed, and why</text></g>
+              <g class="tst-node" data-s="3"><rect x="210" y="190" width="140" height="44" rx="10"/><text x="280" y="208">3 Fix the code</text><text class="sub" x="280" y="224">never the test</text></g>
+              <g class="tst-node" data-s="4"><rect x="10" y="190" width="140" height="44" rx="10"/><text x="80" y="208">Run it again</text><text class="sub" x="80" y="224">same command</text></g>
+              <g class="tst-node" data-s="5"><rect x="112" y="285" width="196" height="44" rx="10"/><text x="210" y="303">Verifier, fresh context</text><text class="sub" x="210" y="319">no memory of the fix</text></g>
+              <g class="tst-node file" data-s="6"><rect x="112" y="350" width="156" height="36" rx="10"/><text x="190" y="373">Verified diff</text></g>
+              <circle class="tst-token" id="loop-token" r="9" cx="0" cy="0" style="transform:translate(180px,28px)"/>
+            </svg>
+            <div>
+              <ol class="tst-list">
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="0"><b>1</b>Write the failing test first</button><p><span class="pb-chip human">Engineer</span> reproduces the bug as a test and confirms it fails for the expected reason. The test is committed before any fix.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="1"><b>2</b>Run the one command</button><p><span class="pb-chip agent">Claude</span> runs the check, for example <code>make test</code>. It fails, as expected.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="2"><b>3</b>Read the result</button><p><span class="pb-chip agent">Claude</span> reads the output and works out what failed and why.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="3"><b>4</b>Fix the code</button><p><span class="pb-chip agent">Claude</span> changes the code. <span class="pb-chip gate">Hook</span> blocks any edit to the test file.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="4"><b>5</b>Run it again</button><p>Same command. If it is still red, go around again. When it is green, the loop ends.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="5"><b>6</b>Verifier checks in a fresh context</button><p>A separate context re-runs the checks, so the verdict is not colored by the assumptions that produced the code.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="6"><b>7</b>A verified diff reaches the engineer</button><p>The diff arrives with the test output attached. The engineer reviews intent and risk.</p></li>
+              </ol>
+              <div class="tst-term" id="loop-term" aria-live="polite"></div>
+              <div class="pb-steps-ui">
+                <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+                <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+                <button class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+                <span class="pb-status" data-pb-status aria-live="polite"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAY 2 -->
+      <div class="pb-play pb-reveal" id="play-evals" data-pb-tabs>
+        <div class="pb-play-head">
+          <div class="num">2</div>
+          <div>
+            <h3>Continuous evals in CI</h3>
+            <p>"Evals are the AI-native equivalent of stage-gate QA." A suite that says whether the agent still does the work to the same standard.</p>
+          </div>
+        </div>
+        <div role="tablist" aria-label="Continuous evals: five parts">
+          <button role="tab" id="e-t1" aria-controls="e-p1" aria-selected="true">What changes</button>
+          <button role="tab" id="e-t2" aria-controls="e-p2" aria-selected="false" tabindex="-1">Getting started</button>
+          <button role="tab" id="e-t3" aria-controls="e-p3" aria-selected="false" tabindex="-1">How to run it</button>
+          <button role="tab" id="e-t4" aria-controls="e-p4" aria-selected="false" tabindex="-1">Governance</button>
+          <button role="tab" id="e-t5" aria-controls="e-p5" aria-selected="false" tabindex="-1">How to measure it</button>
+        </div>
+        <div role="tabpanel" id="e-p1" aria-labelledby="e-t1">
+          <div class="pb-grid two">
+            <div class="pb-card"><span class="pb-chip old">Traditional</span><p>QA gates at stage boundaries.</p></div>
+            <div class="pb-card agent"><span class="pb-chip agent">AI-native</span><p>A suite of evals reruns whenever the agent's configuration changes, such as a new model or a rewritten prompt. It tells you whether the agent still meets the same standard.</p></div>
+          </div>
+          <p class="tst-note">The suite is live. As models improve, some cases stop telling good from bad, and monitoring produces new cases. Some teams prefer to run evals offline on a set cadence. The steps here are for continuous evals.</p>
+        </div>
+        <div role="tabpanel" id="e-p2" aria-labelledby="e-t2" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card"><h3>Prerequisites</h3><p><span class="pb-file">CLAUDE.md</span> and the feedback loop above.</p></div>
+            <div class="pb-card"><h3>Infrastructure</h3>
+              <ul style="margin:0;padding-left:18px"><li>CI that can run Claude Code non-interactively.</li><li>An API key with budget for eval runs.</li></ul></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="e-p3" aria-labelledby="e-t3" hidden>
+          <ol class="pb-list">
+            <li><span><span class="pb-chip human">Platform engineer</span> collects <b>20 to 50 real tasks</b> from recent work, each with its expected or accepted outcome.</span></li>
+            <li><span>Write each task as an eval: the prompt, plus the checks that define acceptable. For example tests pass, lint is clean, behavior is unchanged, policy is followed.</span></li>
+            <li><span>Run the suite non-interactively in CI on a schedule, and on any change to <span class="pb-file">CLAUDE.md</span>, skills or hooks. That configuration steers the agent, so it "deserves the regression testing that code gets".</span></li>
+            <li><span>Gate configuration changes on the results. A skill change that drops the pass rate is reviewed before merge.</span></li>
+            <li><span>Each production incident gets an eval, written by the team that owned the incident. It stays as a regression test.</span></li>
+          </ol>
+          <p class="tst-note">Each eval starts from the code as it was before the work, so every run is comparable. The grader rejects a run that changed files outside the allowed paths, so the agent cannot pass by rewriting its own checks. Do not skip <span class="pb-file">CLAUDE.md</span>, skills or hooks in these runs, because they are what you are testing.</p>
+        </div>
+        <div role="tabpanel" id="e-p4" aria-labelledby="e-t4" hidden>
+          <div class="pb-grid two">
+            <div class="pb-card gate"><h3>What is enforced</h3><p>The pass-rate threshold, as a merge check. Evals give QA "a gate that keeps up with agent output".</p></div>
+            <div class="pb-card"><h3>Where it is logged</h3><p>Runs are logged so you can compare them over time.</p></div>
+            <div class="pb-card human"><h3>Who approves</h3><p>The team that owns the configuration change.</p></div>
+            <div class="pb-card"><h3>Threshold</h3><p>The worked example needs every eval to pass. A suite of 20 to 50 evals may set a lower bar.</p></div>
+          </div>
+        </div>
+        <div role="tabpanel" id="e-p5" aria-labelledby="e-t5" hidden>
+          <div class="pb-metric">
+            <div><b>Leading</b>Eval pass rate over time. How long a production incident takes to become a permanent eval.</div>
+            <div><b>Lagging</b>Regressions caught in CI versus regressions found in production (from the incident tracker).</div>
+          </div>
+        </div>
+
+        <div class="tst-demo" data-pb-steps id="demo-evals">
+          <h4>Watch a config change meet the evals</h4>
+          <p>A pull request trims <span class="pb-file">CLAUDE.md</span>. The suite runs before it can merge.</p>
+          <div class="tst-stage" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+            <div class="tst-run">
+              <div class="tst-trig"><span class="pb-file">CLAUDE.md</span><span id="ev-trig" class="pb-chip old">waiting</span></div>
+              <div class="tst-grid" id="ev-grid" aria-hidden="true"></div>
+              <div class="tst-row" id="ev-r1"><span class="st">PASS</span>portal-stays-off-claims-core (4/4 checks)</div>
+              <div class="tst-row" id="ev-r2"><span class="st">RUN</span><span id="ev-r2t">status-no-pii-in-logs</span><span class="why">Failed check: no response body in logs. The free-text field can hold personal data.</span></div>
+              <div class="tst-merge" id="ev-merge">Merge check: waiting</div>
+            </div>
+            <div>
+              <ol class="tst-list">
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="0"><b>1</b>A config change triggers the suite</button><p><span class="pb-chip gate">CI</span> starts on a pull request that touches <span class="pb-file">CLAUDE.md</span>, <code>.claude</code> or the evals. It also runs on a schedule.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="1"><b>2</b>Each eval gets a clean checkout</button><p>CI checks out the code as it was before the original work, then copies in the branch's configuration. That is the thing under test.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="2"><b>3</b>Claude runs every eval</button><p><span class="pb-chip agent">Claude</span> runs each prompt non-interactively. Then the checks run on whatever files it left behind.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="3"><b>4</b>One eval fails</button><p>The trimmed file dropped the line about not logging response bodies. The suite catches it.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="4"><b>5</b>The merge is blocked, then fixed</button><p><span class="pb-chip human">Config owner</span> puts the line back before merge. The rerun passes.</p></li>
+                <li class="pb-step"><button class="tst-sb" data-pb-goto="5"><b>6</b>A production incident becomes a new eval</button><p>The team that owned the incident writes it. It joins the suite as a regression test.</p></li>
+              </ol>
+              <div class="pb-steps-ui">
+                <button class="pb-btn ghost" data-pb-prev>&larr; Prev</button>
+                <button class="pb-btn red" data-pb-play>&#9654; Play</button>
+                <button class="pb-btn ghost" data-pb-next>Next &rarr;</button>
+                <span class="pb-status" data-pb-status aria-live="polite"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section">
+    <div class="pb-wrap">
+      <div class="pb-head">
+        <span class="pb-kicker">Hand-off</span>
+        <h2>What Test hands to Deploy</h2>
+      </div>
+      <div class="tst-hand pb-reveal">
+        <div>
+          <span class="pb-chip agent">From Stage 4</span>
+          <h3>A verified diff</h3>
+          <p>The change has passed its own checks, with the output attached. Any change to the agent's configuration has passed the evals.</p>
+          <p><span class="pb-file">verified diff</span></p>
+        </div>
+        <div class="go" aria-hidden="true"><svg viewBox="0 0 70 28"><path d="M2 14 H62 M54 6 L64 14 L54 22"/></svg></div>
+        <div>
+          <span class="pb-chip gate">Trigger</span>
+          <h3>A PR enters review</h3>
+          <p>The pull request starts the layered review in <a href="{{BP}}/deploy/">Stage 5: Deploy</a>. Reviewers can focus on intent and risk because the mechanical evidence is already there.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft">
+    <div class="pb-wrap">
+      <div class="pb-takeaways pb-reveal">
+        <h3>Key takeaways</h3>
+        <ul>
+          <li>Give every session one command that says whether the work is done, and put it in <span class="pb-file">CLAUDE.md</span>.</li>
+          <li>For bugs, commit the failing test first. A test the agent could not rewrite is proof the bug is gone.</li>
+          <li>Protect the loop. The agent fixes the code, never the check.</li>
+          <li>Treat <span class="pb-file">CLAUDE.md</span>, skills and hooks like code: a suite of 20 to 50 real tasks reruns on every change and on a schedule.</li>
+          <li>Every production incident becomes a new eval.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  /* Feedback loop */
+  var loop = document.getElementById('demo-loop');
+  var pos = [[330,28],[140,80],[340,80],[340,190],[140,190],[300,285],[258,368]];
+  var term = [
+    [['dim','$ git commit -m "Add failing test for the status bug"'],['bad','test_status.py: FAIL (expected, this is the bug)']],
+    [['dim','$ make test'],['bad','FAIL test_status.py']],
+    [['dim','Reading the output...'],['bad','Cause found in the status handler']],
+    [['dim','Editing the status handler'],['bad','Edit to test_status.py blocked by hook']],
+    [['dim','$ make test'],['ok','PASS: all tests in test_status.py pass']],
+    [['dim','Verifier: fresh context'],['ok','PASS: tests, build, lint re-run']],
+    [['ok','Diff ready for review'],['dim','Test output attached']]
+  ];
+  var tok = document.getElementById('loop-token'), tm = document.getElementById('loop-term');
+  loop.addEventListener('pb:step', function (e) {
+    var i = e.detail, p = pos[i];
+    tok.style.transform = 'translate(' + p[0] + 'px,' + p[1] + 'px)';
+    [].forEach.call(loop.querySelectorAll('.tst-node'), function (n) {
+      var s = +n.getAttribute('data-s');
+      n.classList.toggle('on', s === i); n.classList.toggle('done', s < i);
+    });
+    [].forEach.call(loop.querySelectorAll('.tst-edge'), function (n) {
+      n.classList.toggle('lit', +n.getAttribute('data-s') <= i);
+    });
+    tm.innerHTML = term[i].map(function (l) { return '<div class="' + l[0] + '">' + l[1] + '</div>'; }).join('');
+  });
+  loop.dispatchEvent(new CustomEvent('pb:step', { detail: 0 }));
+
+  /* Evals */
+  var ev = document.getElementById('demo-evals');
+  var grid = document.getElementById('ev-grid');
+  for (var k = 0; k < 36; k++) grid.appendChild(document.createElement('i'));
+  var cells = [].slice.call(grid.children);
+  var r1 = document.getElementById('ev-r1'), r2 = document.getElementById('ev-r2'), r2t = document.getElementById('ev-r2t');
+  var mg = document.getElementById('ev-merge'), tr = document.getElementById('ev-trig');
+  function paint(n, badAt) {
+    cells.forEach(function (c, j) {
+      c.className = j < n ? (j === badAt ? 'f' : 'p') : '';
+    });
+  }
+  ev.addEventListener('pb:step', function (e) {
+    var i = e.detail;
+    tr.textContent = i === 0 ? 'changed: triggers the suite' : (i === 5 ? 'later: new incident' : 'suite running');
+    tr.className = 'pb-chip ' + (i === 0 ? 'gate' : 'old');
+    r1.className = 'tst-row' + (i >= 2 ? ' show pass' : '');
+    r2.className = 'tst-row' + (i === 2 ? ' show' : '') + (i === 3 || i === 4 ? ' show fail' : '') + (i >= 5 ? ' show pass' : '');
+    r2.querySelector('.st').textContent = i === 2 ? 'RUN' : (i === 3 || i === 4 ? 'FAIL' : 'PASS');
+    if (i >= 5) r2t.textContent = 'status-no-pii-in-logs (5/5 checks, after the fix)';
+    else if (i === 3 || i === 4) r2t.textContent = 'status-no-pii-in-logs (4/5 checks)';
+    else r2t.textContent = 'status-no-pii-in-logs';
+    if (i === 0) paint(0);
+    else if (i === 1) paint(0);
+    else if (i === 2) paint(18);
+    else if (i === 3 || i === 4) paint(36, 20);
+    else paint(36);
+    if (i === 5) { cells[0].className = 'p'; }
+    var m = ['waiting', 'waiting for results', 'running', 'blocked: 1 eval failed', 'blocked, then rerun passes', 'passing'][i];
+    mg.textContent = 'Merge check: ' + m;
+    mg.className = 'tst-merge ' + (i === 3 ? 'red' : (i === 4 ? 'amber' : (i === 5 ? 'green' : '')));
+  });
+  ev.dispatchEvent(new CustomEvent('pb:step', { detail: 0 }));
+})();
+</script>
+</body>
+</html>

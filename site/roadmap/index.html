@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your transition roadmap | Bitovi</title>
+<meta name="description" content="Where to start, what depends on what, and who does what as you move to an AI-native SDLC.">
+<link rel="icon" type="image/png" href="{{BP}}/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BP}}/assets/site.css">
+<link rel="stylesheet" href="{{BP}}/assets/playbook.css">
+<style>
+/* plays */
+.rm-cols { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.rm-col { background: #fff; border-radius: 14px; box-shadow: var(--pb-shadow); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.rm-col > a { display: flex; gap: 8px; align-items: center; padding: 12px; background: var(--pb-ink); color: #fff; text-decoration: none; font-family: var(--pb-display); font-weight: 700; font-size: 15px; }
+.rm-col > a i { font-style: normal; flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--pb-red); font-size: 12px; display: grid; place-items: center; }
+.rm-col > a:hover { background: #1e293b; }
+.rm-col ul { list-style: none; margin: 0; padding: 10px; display: grid; gap: 8px; flex: 1; align-content: start; }
+.rm-col li a { display: block; padding: 8px 10px; border-radius: 10px; background: var(--pb-soft); border: 1px solid var(--pb-line); text-decoration: none; color: var(--pb-ink); font-size: 14px; line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
+.rm-col li a:hover { border-color: var(--pb-red); }
+
+/* template */
+.rm-tpl { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; counter-reset: t; }
+.rm-tpl > div { counter-increment: t; background: #fff; border-radius: 14px; border-top: 4px solid var(--pb-file); box-shadow: var(--pb-shadow); padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.rm-tpl > div::before { content: counter(t); width: 28px; height: 28px; border-radius: 50%; background: var(--pb-file); color: #fff; font-family: var(--pb-display); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+.rm-tpl h3 { font-size: 16px; }
+.rm-tpl p { font-size: 15px; }
+
+@media (max-width: 960px) {
+  .rm-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rm-tpl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .rm-cols, .rm-tpl { grid-template-columns: 1fr; }
+}
+
+/* dependency graph */
+.rm-graph { position: relative; background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); padding: 28px 24px; }
+.rm-rows { display: grid; gap: 54px; position: relative; z-index: 1; }
+.rm-row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 8px; align-items: start; position: relative; }
+.rm-rowlab { position: absolute; left: -4px; top: -26px; font-family: var(--pb-display); font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-muted); }
+.rm-node { grid-column: var(--s) / span 2; background: #fff; border: 2px solid var(--pb-line); border-radius: 14px; padding: 8px 8px 6px; display: flex; flex-direction: column; gap: 4px; opacity: 0; transition: opacity .6s var(--pb-ease), border-color .25s, background .25s; min-width: 0; }
+.rm-row.in .rm-node { opacity: 1; }
+.rm-node > button { font: inherit; font-family: var(--pb-display); font-weight: 700; font-size: 14px; line-height: 1.25; color: var(--pb-ink); background: none; border: 0; padding: 2px; text-align: left; cursor: pointer; border-radius: 8px; }
+.rm-node .rm-stage { font-size: 12px; color: var(--pb-muted); text-decoration: none; padding: 0 2px; }
+.rm-node .rm-stage:hover { color: var(--pb-red); text-decoration: underline; }
+.rm-node .rm-needs { display: none; font-size: 13px; color: var(--pb-body); padding: 0 2px; }
+.rm-node.r1 { border-top: 4px solid var(--pb-agent); }
+.rm-node.sel { border-color: var(--pb-red); background: #fff1f2; }
+.rm-node.need { border-color: var(--pb-file); background: var(--pb-file-bg); }
+.rm-node.unlock { border-color: var(--pb-agent); background: var(--pb-agent-bg); }
+.rm-graph.has-sel .rm-node:not(.sel):not(.need):not(.unlock) { opacity: .35; }
+.rm-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: visible; }
+.rm-edge { fill: none; stroke: #94a3b8; stroke-width: 2; }
+.rm-edge.solid { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .8s var(--pb-ease), stroke .25s, opacity .25s; }
+.rm-edge.dotted { stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0; transition: opacity .6s, stroke .25s; }
+.rm-edge.on.solid { stroke-dashoffset: 0; }
+.rm-edge.on.dotted { opacity: 1; }
+.rm-graph.has-sel .rm-edge { opacity: .12; }
+.rm-graph.has-sel .rm-edge.hot { opacity: 1; stroke: var(--pb-red); stroke-width: 3; }
+.rm-key { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 18px; font-size: 14px; color: var(--pb-body); align-items: center; }
+.rm-key svg { width: 44px; height: 10px; vertical-align: middle; margin-right: 6px; }
+.rm-ui { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.rm-panel { margin-top: 16px; padding: 16px 20px; border-radius: 14px; background: var(--pb-soft); border-left: 4px solid var(--pb-red); min-height: 72px; }
+.rm-panel h3 { font-size: 18px; margin-bottom: 6px; }
+.rm-panel ul { margin: 4px 0 0; padding-left: 20px; }
+.rm-panel a { color: var(--pb-red); font-weight: 700; }
+
+/* first play cards */
+.rm-first .pb-card { gap: 10px; }
+.rm-first .pb-card a.go { margin-top: auto; font-family: var(--pb-display); font-weight: 700; font-size: 14px; color: var(--pb-red); text-decoration: none; }
+.rm-first .pb-card a.go:hover { text-decoration: underline; }
+
+/* timeline */
+.rm-time { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.rm-tl { position: relative; display: grid; gap: 14px; padding-left: 0; }
+.rm-tl::before { content: ""; position: absolute; left: 21px; top: 20px; bottom: 20px; width: 3px; background: var(--pb-line); }
+.rm-ph.pb-step { opacity: .6; }
+.rm-ph.pb-step.on { opacity: 1; }
+.rm-ph { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+.rm-ph > button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--pb-line); background: #fff; font-family: var(--pb-display); font-weight: 800; font-size: 16px; color: var(--pb-muted); cursor: pointer; position: relative; z-index: 1; transition: background .3s, border-color .3s, color .3s; }
+.rm-ph.on > button { background: var(--pb-red); border-color: var(--pb-red); color: #fff; }
+.rm-ph.done > button { background: var(--pb-ink); border-color: var(--pb-ink); color: #fff; }
+.rm-ph .body { background: #fff; border: 1px solid var(--pb-line); border-radius: 14px; padding: 16px 18px; }
+.rm-ph.on .body { border-color: var(--pb-red); box-shadow: var(--pb-shadow); }
+.rm-ph h3 { font-size: 18px; margin-bottom: 4px; }
+.rm-ph .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rm-sub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.rm-sub div { background: var(--pb-soft); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.rm-sub b { display: block; font-family: var(--pb-display); font-size: 13px; color: var(--pb-ink); }
+.rm-principles { display: grid; gap: 10px; }
+.rm-principles h3 { font-size: 18px; }
+.rm-pr { background: #fff; border-radius: 12px; border-left: 4px solid var(--pb-gate); padding: 12px 14px; box-shadow: var(--pb-shadow); font-size: 15px; }
+.rm-pr b { font-family: var(--pb-display); color: var(--pb-ink); display: block; font-size: 14px; }
+.rm-note { margin-top: 12px; padding: 12px 16px; border-radius: 12px; background: var(--pb-gate-bg); color: #78350f; font-size: 15px; }
+
+/* roles */
+.rm-roles { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.rm-rolelist { display: flex; flex-direction: column; gap: 6px; }
+.rm-rolelist button { font: inherit; font-family: var(--pb-display); font-weight: 700; font-size: 14px; text-align: left; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--pb-line); background: #fff; color: var(--pb-ink); cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.rm-rolelist button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--pb-human); flex: none; }
+.rm-rolelist button.agent::before { background: var(--pb-agent); }
+.rm-rolelist button[aria-selected="true"] { border-color: var(--pb-human); background: var(--pb-human-bg); }
+.rm-rolelist button.agent[aria-selected="true"] { border-color: var(--pb-agent); background: var(--pb-agent-bg); }
+.rm-panelbox { background: #fff; border-radius: 16px; box-shadow: var(--pb-shadow); padding: 22px; border-top: 5px solid var(--pb-human); }
+.rm-panelbox.agent { border-top-color: var(--pb-agent); }
+.rm-panelbox[hidden] { display: none; }
+.rm-panelbox h3 { font-size: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.rm-pips { display: flex; gap: 6px; margin: 14px 0; flex-wrap: wrap; }
+.rm-pips span { padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; font-family: var(--pb-display); background: var(--pb-old-bg); color: var(--pb-muted); border: 1px solid transparent; transition: background .4s, color .4s; }
+.rm-pips span.on { background: var(--pb-human); color: #fff; }
+.rm-panelbox.agent .rm-pips span.on { background: #0f766e; }
+.rm-acts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rm-acts li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; border-radius: 10px; background: var(--pb-soft); animation: pb-fade .35s var(--pb-ease) both; animation-delay: calc(var(--i) * 50ms); }
+.rm-acts li .st { flex: none; font-size: 12px; font-weight: 700; font-family: var(--pb-display); color: var(--pb-muted); min-width: 64px; }
+
+.rm-help { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--pb-navy); color: #e2e8f0; border-radius: 16px; padding: 22px 26px; }
+.rm-help p { flex: 1; min-width: 240px; font-size: 17px; }
+.rm-help .pb-btn { background: var(--pb-red); }
+
+@media (max-width: 960px) {
+  .rm-graph { padding: 20px 14px; }
+  .rm-rows { gap: 30px; }
+  .rm-row { display: flex; flex-direction: column; gap: 10px; }
+  .rm-rowlab { position: static; }
+  .rm-node { grid-column: auto; }
+  .rm-node .rm-needs { display: block; }
+  .rm-svg { display: none; }
+  .rm-time, .rm-roles { grid-template-columns: 1fr; }
+  .rm-rolelist { flex-direction: row; flex-wrap: wrap; }
+  .rm-sub { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rm-node { opacity: 1; transform: none; transition: none; }
+  .rm-edge.solid { stroke-dashoffset: 0; transition: none; }
+  .rm-edge.dotted { opacity: 1; transition: none; }
+}
+</style>
+</head>
+<body>
+<!-- @site-header -->
+<nav data-pb-stagenav></nav>
+<main class="pb-page" id="main">
+  <section class="pb-hero">
+    <div class="pb-wrap">
+      <div data-pb-crumbs></div>
+      <div>
+        <span class="pb-kicker">SDLC Playbook</span>
+        <h1>Your transition roadmap</h1>
+        <p class="lead">Where to start, what depends on what, and who does what as you move to an AI-native SDLC.</p>
+      </div>
+      <div data-pb-loop></div>
+    </div>
+  </section>
+  
+  <!-- PAGE CONTENT START -->
+  <section class="pb-section" id="plays">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The twelve plays</span>
+        <h2>Every play, by stage</h2>
+        <p class="pb-lede">A play is one change to how a stage works. The plays are modular and the six stages are non-linear, so you can work on different stages at different times.</p>
+      </div>
+      <div class="rm-cols">
+        <div class="rm-col pb-reveal"><a href="{{BP}}/plan/"><i>1</i>Plan</a><ul><li><a href="{{BP}}/plan/">Capture as intent.md</a></li></ul></div>
+        <div class="rm-col pb-reveal d1"><a href="{{BP}}/design/"><i>2</i>Design</a><ul><li><a href="{{BP}}/design/">Requirements and design</a></li></ul></div>
+        <div class="rm-col pb-reveal d2"><a href="{{BP}}/build/"><i>3</i>Build</a><ul><li><a href="{{BP}}/build/">Plan mode first</a></li><li><a href="{{BP}}/build/">CLAUDE.md</a></li><li><a href="{{BP}}/build/">Skills as institutional knowledge</a></li><li><a href="{{BP}}/build/">Parallel sessions and subagents</a></li></ul></div>
+        <div class="rm-col pb-reveal d3"><a href="{{BP}}/test/"><i>4</i>Test</a><ul><li><a href="{{BP}}/test/">Give Claude a feedback loop</a></li><li><a href="{{BP}}/test/">Continuous evals in CI</a></li></ul></div>
+        <div class="rm-col pb-reveal d4"><a href="{{BP}}/deploy/"><i>5</i>Deploy</a><ul><li><a href="{{BP}}/deploy/">AI in the PR review loop</a></li><li><a href="{{BP}}/deploy/">Hooks as approval gates</a></li><li><a href="{{BP}}/deploy/">CI/CD integration and deployment</a></li></ul></div>
+        <div class="rm-col pb-reveal d4"><a href="{{BP}}/maintain/"><i>6</i>Maintain</a><ul><li><a href="{{BP}}/maintain/">Closing the loop on metrics</a></li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft" id="template">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">How to read a play</span>
+        <h2>Each play is laid out the same way</h2>
+        <p class="pb-lede">Each play on the stage pages has the same five parts, so you can compare plays side by side. The first three plays also show what the play looks like in practice.</p>
+      </div>
+      <div class="rm-tpl">
+        <div class="pb-reveal"><h3>What changes</h3><p>How the work differs from the traditional way.</p></div>
+        <div class="pb-reveal d1"><h3>Getting started</h3><p>The prerequisites and the infrastructure you need first.</p></div>
+        <div class="pb-reveal d2"><h3>How to run it</h3><p>The concrete steps.</p></div>
+        <div class="pb-reveal d3"><h3>Governance</h3><p>The controls and considerations that keep it safe.</p></div>
+        <div class="pb-reveal d4"><h3>How to measure it</h3><p>One leading and one lagging indicator.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section" id="graph">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">What depends on what</span>
+        <h2>The twelve plays as a dependency graph</h2>
+        <p class="pb-lede">The course orders the plays by what they need, not by a fixed sequence. Plays in row 1 need nothing. Each later row builds on plays above it. Select a play to see what it needs and what it unlocks.</p>
+      </div>
+      <div class="rm-graph pb-reveal" id="rm-graph">
+        <svg class="rm-svg" id="rm-svg" aria-hidden="true"></svg>
+        <div class="rm-rows">
+        <div class="rm-row" data-row="1"><span class="rm-rowlab">Row 1, no prerequisites</span>
+          <div class="rm-node r1" id="n-intent" data-id="intent" data-needs="" data-helps="" style="--s:1"><button type="button" aria-pressed="false">Capture as intent.md</button><a class="rm-stage" href="{{BP}}/plan/">Stage 1: Plan</a><span class="rm-needs">Nothing points into this play.</span></div>
+          <div class="rm-node r1" id="n-skills" data-id="skills" data-needs="" data-helps="claude" style="--s:3"><button type="button" aria-pressed="false">Skills as institutional knowledge</button><a class="rm-stage" href="{{BP}}/build/">Stage 3: Build</a><span class="rm-needs">Helped by: CLAUDE.md.</span></div>
+          <div class="rm-node r1" id="n-claude" data-id="claude" data-needs="" data-helps="" style="--s:5"><button type="button" aria-pressed="false">CLAUDE.md</button><a class="rm-stage" href="{{BP}}/build/">Stage 3: Build</a><span class="rm-needs">Nothing points into this play.</span></div>
+          <div class="rm-node r1" id="n-feedback" data-id="feedback" data-needs="" data-helps="" style="--s:7"><button type="button" aria-pressed="false">Give Claude a feedback loop</button><a class="rm-stage" href="{{BP}}/test/">Stage 4: Test</a><span class="rm-needs">Nothing points into this play.</span></div>
+          <div class="rm-node r1" id="n-hooks" data-id="hooks" data-needs="" data-helps="" style="--s:9"><button type="button" aria-pressed="false">Hooks as approval gates</button><a class="rm-stage" href="{{BP}}/deploy/">Stage 5: Deploy</a><span class="rm-needs">Nothing points into this play.</span></div>
+          <div class="rm-node r1" id="n-planmode" data-id="planmode" data-needs="" data-helps="" style="--s:11"><button type="button" aria-pressed="false">Plan mode first</button><a class="rm-stage" href="{{BP}}/build/">Stage 3: Build</a><span class="rm-needs">Nothing points into this play.</span></div>
+        </div>
+        <div class="rm-row" data-row="2"><span class="rm-rowlab">Row 2</span>
+          <div class="rm-node" id="n-subagents" data-id="subagents" data-needs="claude" data-helps="feedback" style="--s:5"><button type="button" aria-pressed="false">Parallel sessions and subagents</button><a class="rm-stage" href="{{BP}}/build/">Stage 3: Build</a><span class="rm-needs">Needs: CLAUDE.md. Helped by: Give Claude a feedback loop.</span></div>
+          <div class="rm-node" id="n-evals" data-id="evals" data-needs="claude feedback" data-helps="" style="--s:7"><button type="button" aria-pressed="false">Continuous evals in CI</button><a class="rm-stage" href="{{BP}}/test/">Stage 4: Test</a><span class="rm-needs">Needs: CLAUDE.md, Give Claude a feedback loop. </span></div>
+        </div>
+        <div class="rm-row" data-row="3"><span class="rm-rowlab">Row 3</span>
+          <div class="rm-node" id="n-reqdesign" data-id="reqdesign" data-needs="intent skills" data-helps="" style="--s:3"><button type="button" aria-pressed="false">Requirements and design</button><a class="rm-stage" href="{{BP}}/design/">Stage 2: Design</a><span class="rm-needs">Needs: Capture as intent.md, Skills as institutional knowledge. </span></div>
+          <div class="rm-node" id="n-prreview" data-id="prreview" data-needs="evals subagents" data-helps="skills" style="--s:6"><button type="button" aria-pressed="false">AI in the PR review loop</button><a class="rm-stage" href="{{BP}}/deploy/">Stage 5: Deploy</a><span class="rm-needs">Needs: Continuous evals in CI, Parallel sessions and subagents. Helped by: Skills as institutional knowledge.</span></div>
+        </div>
+        <div class="rm-row" data-row="4"><span class="rm-rowlab">Row 4</span>
+          <div class="rm-node" id="n-cicd" data-id="cicd" data-needs="prreview hooks" data-helps="" style="--s:8"><button type="button" aria-pressed="false">CI/CD integration and deployment</button><a class="rm-stage" href="{{BP}}/deploy/">Stage 5: Deploy</a><span class="rm-needs">Needs: AI in the PR review loop, Hooks as approval gates. </span></div>
+        </div>
+        <div class="rm-row" data-row="5"><span class="rm-rowlab">Row 5</span>
+          <div class="rm-node" id="n-closing" data-id="closing" data-needs="cicd intent" data-helps="" style="--s:1"><button type="button" aria-pressed="false">Closing the loop on metrics</button><a class="rm-stage" href="{{BP}}/maintain/">Stage 6: Maintain</a><span class="rm-needs">Needs: CI/CD integration and deployment, Capture as intent.md. </span></div>
+        </div>
+        </div>
+      </div>
+      <div class="rm-key" aria-hidden="true">
+        <span><svg viewBox="0 0 44 10"><line x1="0" y1="5" x2="44" y2="5" stroke="#94a3b8" stroke-width="2"/></svg>Builds on (needs)</span>
+        <span><svg viewBox="0 0 44 10"><line x1="1" y1="5" x2="43" y2="5" stroke="#94a3b8" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/></svg>Helps, not required</span>
+        <span class="pb-chip" style="background:#e0e7ff;color:#4f46e5">Needs</span>
+        <span class="pb-chip agent">Unlocks</span>
+      </div>
+      <div class="rm-ui">
+        <button class="pb-btn ghost" type="button" id="rm-replay">Replay the build-up</button>
+        <button class="pb-btn ghost" type="button" id="rm-clear">Clear selection</button>
+      </div>
+      <div class="rm-panel" id="rm-panel" aria-live="polite"><h3>Pick a play</h3><p>Arrows point from a play to the plays that build on it. CLAUDE.md helps Skills, but Skills do not require it.</p></div>
+    </div>
+  </section>
+
+  <section class="pb-section soft" id="first">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Where to begin</span>
+        <h2>Pick your first play</h2>
+        <p class="pb-lede">Six plays have no prerequisites. Nothing points into them, so any one can be your first.</p>
+      </div>
+      <div class="pb-grid rm-first">
+        <div class="pb-card agent pb-reveal d1"><span class="pb-chip agent" style="align-self:flex-start">Stage 1: Plan</span><h3>Capture as intent.md</h3><p>Turn an idea into a committed intent.md that people and agents can both act on.</p><a class="go" href="{{BP}}/plan/">Open the Plan page</a></div>
+        <div class="pb-card agent pb-reveal d2"><span class="pb-chip agent" style="align-self:flex-start">Stage 3: Build</span><h3>Plan mode first</h3><p>Claude drafts plan.md in plan mode, and an engineer corrects and accepts it before building.</p><a class="go" href="{{BP}}/build/">Open the Build page</a></div>
+        <div class="pb-card agent pb-reveal d3"><span class="pb-chip agent" style="align-self:flex-start">Stage 3: Build</span><h3>CLAUDE.md</h3><p>A versioned, machine-readable file of institutional knowledge. The course keeps it under a page.</p><a class="go" href="{{BP}}/build/">Open the Build page</a></div>
+        <div class="pb-card agent pb-reveal d1"><span class="pb-chip agent" style="align-self:flex-start">Stage 3: Build</span><h3>Skills as institutional knowledge</h3><p>Encode a policy as a skill. Start with one policy that is enforced inconsistently and has a named owner.</p><a class="go" href="{{BP}}/build/">Open the Build page</a></div>
+        <div class="pb-card agent pb-reveal d2"><span class="pb-chip agent" style="align-self:flex-start">Stage 4: Test</span><h3>Give Claude a feedback loop</h3><p>Give Claude a way to check its own work.</p><a class="go" href="{{BP}}/test/">Open the Test page</a></div>
+        <div class="pb-card agent pb-reveal d3"><span class="pb-chip agent" style="align-self:flex-start">Stage 5: Deploy</span><h3>Hooks as approval gates</h3><p>Express an approval gate as a hook, so governance is enforced as the AI acts.</p><a class="go" href="{{BP}}/deploy/">Open the Deploy page</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section" id="path">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">The transition path</span>
+        <h2>From row 1 to row 5</h2>
+        <p class="pb-lede">There is no single fixed sequence. The plays are modular and the stages are non-linear. The five steps below are our labels for the rows of the course's dependency graph. The course itself uses rows, not phases, and gives no timeframes.</p>
+      </div>
+      <div class="rm-time">
+        <div data-pb-steps id="rm-steps">
+          <div class="rm-tl">
+            <div class="rm-ph pb-step"><button type="button" data-pb-goto="0" aria-label="Phase 1">1</button><div class="body"><h3>Row 1: start anywhere</h3><p>No prerequisites. In practice, the course suggests this order of thinking:</p>
+              <div class="rm-sub"><div><b>Foundational files</b>CLAUDE.md and skills</div><div><b>Guardrails</b>Hooks and the feedback loop</div><div><b>Workflow artifacts</b>intent.md and plan mode</div></div></div></div>
+            <div class="rm-ph pb-step"><button type="button" data-pb-goto="1" aria-label="Phase 2">2</button><div class="body"><h3>Row 2: scale the build and test</h3><p>Parallel sessions and subagents need CLAUDE.md, and the feedback loop helps. Continuous evals need CLAUDE.md and the feedback loop.</p></div></div>
+            <div class="rm-ph pb-step"><button type="button" data-pb-goto="2" aria-label="Phase 3">3</button><div class="body"><h3>Row 3: design and review</h3><p>Requirements and design need intent.md and skills. AI in the PR review loop needs evals and subagents, and skills help.</p></div></div>
+            <div class="rm-ph pb-step"><button type="button" data-pb-goto="3" aria-label="Phase 4">4</button><div class="body"><h3>Row 4: CI/CD</h3><p>CI/CD integration and deployment needs PR review and hooks. The gates must exist before automation speeds anything through them.</p></div></div>
+            <div class="rm-ph pb-step"><button type="button" data-pb-goto="4" aria-label="Phase 5">5</button><div class="body"><h3>Row 5: close the loop</h3><p>Closing the loop on metrics needs CI/CD and intent.md. Production signals write the next intent.md.</p></div></div>
+          </div>
+          <div class="pb-steps-ui">
+            <button class="pb-btn ghost" type="button" data-pb-prev>Back</button>
+            <button class="pb-btn" type="button" data-pb-play>&#9654; Play</button>
+            <button class="pb-btn ghost" type="button" data-pb-next>Next</button>
+            <span class="pb-status" data-pb-status></span>
+          </div>
+          <p class="rm-note">Most organizations sit between the traditional and AI-native ways of working. You can move one stage at a time.</p>
+        </div>
+        <div class="rm-principles">
+          <h3>The course's rules for the move</h3>
+          <div class="rm-pr pb-reveal"><b>Prompt by hand first</b>Then make it an org-level slash command. Then trigger it on merge of the previous artifact.</div>
+          <div class="rm-pr pb-reveal"><b>CI/CD: read-only first</b>Start with read-only judgment steps. Add write steps behind existing gates, then expose deployment through MCP, then tier autonomy by environment.</div>
+          <div class="rm-pr pb-reveal"><b>Start with 2 to 3 parallel sessions</b>Add more only while review keeps up.</div>
+          <div class="rm-pr pb-reveal"><b>Auto mode comes later</b>Make it the default for routine work only once guardrails mature: a tuned CLAUDE.md, skills that encode policy, hooks that block unsafe actions, and a test suite Claude can run.</div>
+          <div class="rm-pr pb-reveal"><b>One policy, one named owner</b>Skills first target one inconsistently enforced policy.</div>
+          <div class="rm-pr pb-reveal"><b>One metric, one stable baseline</b>Stage 6 first targets one metric with a stable rolling baseline.</div>
+          <div class="rm-pr pb-reveal"><b>Legacy tools: linkage first</b>Artifacts note the record ID, and legacy records carry the commit SHA. Then pick one source of truth per artifact.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section soft" id="roles">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Who does what</span>
+        <h2>Pick a role</h2>
+        <p class="pb-lede">Choose a role to see what it does across the stages. Lit stages are the ones that role touches.</p>
+        <div class="pb-legend"><span class="pb-chip human">A person decides or does</span><span class="pb-chip agent">Claude does the work</span></div>
+      </div>
+      <div class="rm-roles" id="rm-roles">
+        <div class="rm-rolelist" role="tablist" aria-label="Roles" aria-orientation="vertical"><button type="button" role="tab" id="role-t0" aria-controls="role-p0" aria-selected="false" tabindex="-1" class="">Originator (any employee)</button><button type="button" role="tab" id="role-t1" aria-controls="role-p1" aria-selected="true" tabindex="0" class="">Product owner</button><button type="button" role="tab" id="role-t2" aria-controls="role-p2" aria-selected="false" tabindex="-1" class="agent">Claude (agent)</button><button type="button" role="tab" id="role-t3" aria-controls="role-p3" aria-selected="false" tabindex="-1" class="">Policy owners</button><button type="button" role="tab" id="role-t4" aria-controls="role-p4" aria-selected="false" tabindex="-1" class="">Tech lead or architect</button><button type="button" role="tab" id="role-t5" aria-controls="role-p5" aria-selected="false" tabindex="-1" class="">Engineer</button><button type="button" role="tab" id="role-t6" aria-controls="role-p6" aria-selected="false" tabindex="-1" class="">Platform engineer or platform team</button><button type="button" role="tab" id="role-t7" aria-controls="role-p7" aria-selected="false" tabindex="-1" class="">Engineering leadership, change management and compliance</button><button type="button" role="tab" id="role-t8" aria-controls="role-p8" aria-selected="false" tabindex="-1" class="">Release manager</button><button type="button" role="tab" id="role-t9" aria-controls="role-p9" aria-selected="false" tabindex="-1" class="">Code owner</button><button type="button" role="tab" id="role-t10" aria-controls="role-p10" aria-selected="false" tabindex="-1" class="">Service owner or on-call</button><button type="button" role="tab" id="role-t11" aria-controls="role-p11" aria-selected="false" tabindex="-1" class="">Org Owner (Claude org)</button></div>
+        <div>
+<div role="tabpanel" id="role-p0" aria-labelledby="role-t0" class="rm-panelbox" hidden><h3>Originator (any employee) <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="on">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 1</span><span>Brainstorms with Claude</span></li><li style="--i:1"><span class="st">Stage 1</span><span>Corrects the draft intent.md</span></li></ul></div>
+<div role="tabpanel" id="role-p1" aria-labelledby="role-t1" class="rm-panelbox"><h3>Product owner <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="on">1. Plan</span><span class="on">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="">5. Deploy</span><span class="on">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 1</span><span>Reviews and corrects intent.md</span></li><li style="--i:1"><span class="st">Stage 1</span><span>Accepts or closes intent.md</span></li><li style="--i:2"><span class="st">Stage 2</span><span>Reviews spec.md (does not write it)</span></li><li style="--i:3"><span class="st">Stage 2</span><span>Resolves flagged concerns with policy owners</span></li><li style="--i:4"><span class="st">Stage 2</span><span>Decides whether spec and intent go to build</span></li><li style="--i:5"><span class="st">Stage 2</span><span>Mocks up front-end designs in Claude Design</span></li><li style="--i:6"><span class="st">Stage 6</span><span>Triages product-facing findings from Stage 6</span></li></ul></div>
+<div role="tabpanel" id="role-p2" aria-labelledby="role-t2" class="rm-panelbox agent" hidden><h3>Claude (agent) <span class="pb-chip agent">Agent</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="on">1. Plan</span><span class="on">2. Design</span><span class="on">3. Build</span><span class="on">4. Test</span><span class="on">5. Deploy</span><span class="on">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 1</span><span>Interviews the originator and drafts intent.md</span></li><li style="--i:1"><span class="st">Stage 2</span><span>Writes spec.md with skills applied</span></li><li style="--i:2"><span class="st">Stage 3</span><span>Drafts plan.md in plan mode</span></li><li style="--i:3"><span class="st">Stage 3</span><span>Implements</span></li><li style="--i:4"><span class="st">Stage 4</span><span>Verifies its own work</span></li><li style="--i:5"><span class="st">Stage 5</span><span>Reviews PRs</span></li><li style="--i:6"><span class="st">Stage 5</span><span>Addresses @claude comments</span></li><li style="--i:7"><span class="st">Stage 5</span><span>Triages builds</span></li><li style="--i:8"><span class="st">Stage 6</span><span>Diagnoses breaches and writes intent.md</span></li><li style="--i:9"><span class="st">All stages</span><span>Acts only via gated routes</span></li></ul></div>
+<div role="tabpanel" id="role-p3" aria-labelledby="role-t3" class="rm-panelbox" hidden><h3>Policy owners <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="on">2. Design</span><span class="on">3. Build</span><span class="">4. Test</span><span class="">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 3</span><span>Own the source of truth for each skill</span></li><li style="--i:1"><span class="st">Stage 3</span><span>Sign off skill changes</span></li><li style="--i:2"><span class="st">Stage 2</span><span>Receive flagged concerns</span></li></ul></div>
+<div role="tabpanel" id="role-p4" aria-labelledby="role-t4" class="rm-panelbox" hidden><h3>Tech lead or architect <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="on">2. Design</span><span class="on">3. Build</span><span class="">4. Test</span><span class="on">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 3</span><span>Leads sign-off of the template skill</span></li><li style="--i:1"><span class="st">Stage 2</span><span>Approves higher-risk plans and specs</span></li><li style="--i:2"><span class="st">Stage 5</span><span>Writes REVIEW.md</span></li><li style="--i:3"><span class="st">Stage 5</span><span>Sets the human threshold</span></li><li style="--i:4"><span class="st">Stage 5</span><span>Tunes review monthly</span></li></ul></div>
+<div role="tabpanel" id="role-p5" aria-labelledby="role-t5" class="rm-panelbox" hidden><h3>Engineer <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="on">3. Build</span><span class="on">4. Test</span><span class="">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 3</span><span>Corrects and accepts plan.md</span></li><li style="--i:1"><span class="st">Stage 3</span><span>Runs plan mode and sessions</span></li><li style="--i:2"><span class="st">Stage 4</span><span>Sets up the feedback loop</span></li><li style="--i:3"><span class="st">Stage 3</span><span>Runs parallel sessions and steers or reviews them</span></li><li style="--i:4"><span class="st">Stage 3</span><span>Writes skills from the policy owner's source</span></li><li style="--i:5"><span class="st">Stage 3</span><span>Owns CLAUDE.md corrections</span></li></ul></div>
+<div role="tabpanel" id="role-p6" aria-labelledby="role-t6" class="rm-panelbox" hidden><h3>Platform engineer or platform team <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="on">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="on">4. Test</span><span class="on">5. Deploy</span><span class="on">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 1</span><span>Stands up the intent home</span></li><li style="--i:1"><span class="st">Stage 4</span><span>Collects 20 to 50 evals and runs CI</span></li><li style="--i:2"><span class="st">Stage 5</span><span>Expresses approval gates as hooks</span></li><li style="--i:3"><span class="st">Stage 5</span><span>Deploys managed settings</span></li><li style="--i:4"><span class="st">Stage 5</span><span>Builds the CI/CD, MCP and sandbox setup</span></li><li style="--i:5"><span class="st">Stage 6</span><span>Writes the detection script</span></li></ul></div>
+<div role="tabpanel" id="role-p7" aria-labelledby="role-t7" class="rm-panelbox" hidden><h3>Engineering leadership, change management and compliance <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="on">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 5</span><span>List the human approval gates that must survive</span></li></ul></div>
+<div role="tabpanel" id="role-p8" aria-labelledby="role-t8" class="rm-panelbox" hidden><h3>Release manager <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="on">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 5</span><span>Authorizes production release via change ticket</span></li></ul></div>
+<div role="tabpanel" id="role-p9" aria-labelledby="role-t9" class="rm-panelbox" hidden><h3>Code owner <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="on">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 5</span><span>Approves PRs through branch protection</span></li></ul></div>
+<div role="tabpanel" id="role-p10" aria-labelledby="role-t10" class="rm-panelbox" hidden><h3>Service owner or on-call <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="">5. Deploy</span><span class="on">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 6</span><span>Triages the Stage 6 intent queue: fix now, schedule, or dismiss</span></li></ul></div>
+<div role="tabpanel" id="role-p11" aria-labelledby="role-t11" class="rm-panelbox" hidden><h3>Org Owner (Claude org) <span class="pb-chip human">Human</span></h3><div class="rm-pips" aria-label="Stages this role touches"><span class="">1. Plan</span><span class="">2. Design</span><span class="">3. Build</span><span class="">4. Test</span><span class="on">5. Deploy</span><span class="">6. Maintain</span></div><ul class="rm-acts"><li style="--i:0"><span class="st">Stage 5</span><span>Enables the managed Code Review service</span></li></ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-section" id="help">
+    <div class="pb-wrap">
+      <div class="rm-help pb-reveal">
+        <p>Bitovi helps teams choose a first play, set up the guardrails, and work through the rows with them.</p>
+        <a class="pb-btn" href="https://bitovi.github.io/vibes/service-drafts/ai-accelerated-engineering/">How Bitovi helps</a>
+      </div>
+    </div>
+  </section>
+  <!-- PAGE CONTENT END -->
+  <section class="pb-section soft"><div class="pb-wrap">
+    <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
+    <div data-pb-pager style="margin-top:20px"></div>
+  </div></section>
+</main>
+<!-- @site-footer -->
+<script src="{{BP}}/assets/playbook.js"></script>
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return [].slice.call((r || document).querySelectorAll(s)); };
+  var graph = $('#rm-graph'), svg = $('#rm-svg'), panel = $('#rm-panel');
+  var nodes = {}, edges = [], NS = 'http://www.w3.org/2000/svg';
+  $$('.rm-node').forEach(function (n) {
+    nodes[n.getAttribute('data-id')] = {
+      el: n, row: +n.parentNode.getAttribute('data-row'),
+      needs: (n.getAttribute('data-needs') || '').split(' ').filter(Boolean),
+      helps: (n.getAttribute('data-helps') || '').split(' ').filter(Boolean)
+    };
+  });
+  function label(id) { return $('button', nodes[id].el).textContent; }
+
+  function geom(a, b) {
+    var g = graph.getBoundingClientRect(), A = nodes[a].el.getBoundingClientRect(), Bb = nodes[b].el.getBoundingClientRect();
+    var ax, ay, bx, by, d;
+    if (nodes[a].row === nodes[b].row) {
+      var left = A.left < Bb.left;
+      ax = (left ? A.right : A.left) - g.left; bx = (left ? Bb.left : Bb.right) - g.left;
+      ay = A.top + A.height / 2 - g.top; by = Bb.top + Bb.height / 2 - g.top;
+      return 'M' + ax + ' ' + ay + ' L' + bx + ' ' + by;
+    }
+    ax = A.left + A.width / 2 - g.left; ay = A.bottom - g.top;
+    bx = Bb.left + Bb.width / 2 - g.left; by = Bb.top - g.top;
+    var m = (ay + by) / 2;
+    return 'M' + ax + ' ' + ay + ' C' + ax + ' ' + m + ' ' + bx + ' ' + m + ' ' + bx + ' ' + by;
+  }
+  function build() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    edges = [];
+    var defs = document.createElementNS(NS, 'defs');
+    defs.innerHTML = '<marker id="rm-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>';
+    svg.appendChild(defs);
+    Object.keys(nodes).forEach(function (id) {
+      var n = nodes[id];
+      n.needs.forEach(function (from) { add(from, id, 'solid'); });
+      n.helps.forEach(function (from) { add(from, id, 'dotted'); });
+    });
+    function add(from, to, kind) {
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('class', 'rm-edge ' + kind);
+      p.setAttribute('pathLength', '1');
+      p.setAttribute('marker-end', 'url(#rm-ah)');
+      p.setAttribute('d', geom(from, to));
+      svg.appendChild(p);
+      edges.push({ el: p, from: from, to: to, kind: kind });
+    }
+    edges.forEach(function (e) { if (nodes[e.to].el.parentNode.classList.contains('in')) e.el.classList.add('on'); });
+    paint();
+  }
+
+  var timers = [];
+  function showRow(r) {
+    var row = $('.rm-row[data-row="' + r + '"]');
+    row.classList.add('in');
+    edges.forEach(function (e) { if (nodes[e.to].row === r) setTimeout(function () { e.el.classList.add('on'); }, PB.reduced ? 0 : 350); });
+  }
+  function play() {
+    timers.forEach(clearTimeout); timers = [];
+    $$('.rm-row').forEach(function (r) { r.classList.remove('in'); });
+    edges.forEach(function (e) { e.el.classList.remove('on'); });
+    if (PB.reduced) { for (var r = 1; r <= 5; r++) showRow(r); return; }
+    for (var i = 1; i <= 5; i++) (function (r) { timers.push(setTimeout(function () { showRow(r); }, 150 + (r - 1) * 800)); })(i);
+  }
+  function instant() { for (var r = 1; r <= 5; r++) showRow(r); }
+
+  function names(ids) { return ids.length ? '<ul>' + ids.map(function (i) { return '<li>' + label(i) + '</li>'; }).join('') + '</ul>' : '<p>Nothing.</p>'; }
+  var sel = null;
+  function paint() {
+    graph.classList.toggle('has-sel', !!sel);
+    Object.keys(nodes).forEach(function (id) {
+      var n = nodes[id], isNeed = false, isUnlock = false;
+      if (sel) {
+        isNeed = nodes[sel].needs.indexOf(id) > -1 || nodes[sel].helps.indexOf(id) > -1;
+        isUnlock = n.needs.indexOf(sel) > -1 || n.helps.indexOf(sel) > -1;
+      }
+      n.el.classList.toggle('sel', sel === id);
+      n.el.classList.toggle('need', isNeed);
+      n.el.classList.toggle('unlock', isUnlock);
+      $('button', n.el).setAttribute('aria-pressed', sel === id);
+    });
+    edges.forEach(function (e) { e.el.classList.toggle('hot', !!sel && (e.from === sel || e.to === sel)); });
+  }
+  function select(id) {
+    sel = (sel === id) ? null : id;
+    paint();
+    if (!sel) { panel.innerHTML = '<h3>Pick a play</h3><p>Arrows point from a play to the plays that build on it. CLAUDE.md helps Skills, but Skills do not require it.</p>'; return; }
+    var n = nodes[sel];
+    var unl = Object.keys(nodes).filter(function (i) { return nodes[i].needs.indexOf(sel) > -1; });
+    var hlp = Object.keys(nodes).filter(function (i) { return nodes[i].helps.indexOf(sel) > -1; });
+    var link = $('a.rm-stage', n.el);
+    var html = '<h3>' + label(sel) + '</h3><div class="pb-grid">' +
+      '<div><b>Needs</b>' + (n.needs.length ? names(n.needs) : '<p>Nothing. You can start here.</p>') + '</div>' +
+      '<div><b>Helped by</b>' + (n.helps.length ? names(n.helps) : '<p>Nothing.</p>') + '</div>' +
+      '<div><b>Unlocks</b>' + (unl.length ? names(unl) : '<p>Nothing builds on it directly.</p>') + (hlp.length ? '<b>Helps</b>' + names(hlp) : '') + '</div></div>' +
+      '<p style="margin-top:10px"><a href="' + link.getAttribute('href') + '">Open the ' + link.textContent + ' page</a></p>';
+    panel.innerHTML = html;
+  }
+  $$('.rm-node > button').forEach(function (b) { b.addEventListener('click', function () { select(b.parentNode.getAttribute('data-id')); }); });
+  $('#rm-clear').addEventListener('click', function () { sel = null; paint(); panel.innerHTML = '<h3>Pick a play</h3><p>Arrows point from a play to the plays that build on it. CLAUDE.md helps Skills, but Skills do not require it.</p>'; });
+  $('#rm-replay').addEventListener('click', play);
+  window.addEventListener('resize', function () { edges.forEach(function (e) { e.el.setAttribute('d', geom(e.from, e.to)); }); });
+
+  build();
+  if (PB.reduced || !('IntersectionObserver' in window)) { instant(); }
+  else {
+    new IntersectionObserver(function (es, io) { if (es[0].isIntersecting) { io.disconnect(); play(); } }, { threshold: 0.2 }).observe(graph);
+  }
+  if (window.matchMedia('(max-width: 960px)').matches) instant();
+
+  /* Roles */
+  PB.tabs($('#rm-roles'));
+})();
+</script>
+
+</body>
+</html>
