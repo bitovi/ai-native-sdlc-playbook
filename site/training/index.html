@@ -12,8 +12,397 @@
 <link rel="stylesheet" href="{{BP}}/assets/site.css">
 <link rel="stylesheet" href="{{BP}}/assets/playbook.css">
 <style>
+/* ---------- Lessons: intro, agenda, progress ---------- */
+.training-agenda { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.training-agenda-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: tl; }
+.training-agenda-list li { counter-increment: tl; }
+.training-agenda-list a { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border: 1px solid var(--pb-line); border-radius: 12px; text-decoration: none; color: var(--pb-ink); background: #fff; transition: border-color .2s, transform .2s var(--pb-ease); }
+.training-agenda-list a::before { content: counter(tl); flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--pb-ink); color: #fff; font-family: var(--pb-display); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+.training-agenda-list a:hover { border-color: var(--pb-red); transform: translateX(3px); }
+.training-agenda-list b { font-family: var(--pb-display); font-weight: 600; font-size: 16px; flex: 1; min-width: 0; }
+.training-agenda-list span { font-size: 14px; color: var(--pb-muted); white-space: nowrap; }
+.training-budget { background: var(--pb-soft); border-radius: var(--pb-radius); padding: 20px 22px; display: grid; gap: 14px; }
+.training-budget-bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--pb-line); }
+.training-budget-bar i { display: block; height: 100%; }
+.training-budget-bar .l { width: 66.6%; background: var(--pb-agent); }
+.training-budget-bar .e { width: 33.4%; background: var(--pb-red); }
+.training-budget ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 16px; }
+.training-budget li { display: flex; gap: 8px; align-items: center; }
+.training-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.training-dot.l { background: var(--pb-agent); }
+.training-dot.e { background: var(--pb-red); }
 
+.training-progress { margin-top: 28px; border: 1px solid var(--pb-line); border-radius: var(--pb-radius); padding: 18px 20px; background: #fff; }
+.training-progress-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; margin-bottom: 12px; }
+.training-progress-top b { font-family: var(--pb-display); color: var(--pb-ink); }
+.training-progress-top span { font-size: 15px; color: var(--pb-muted); }
+.training-progress-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.training-progress-steps a { display: grid; justify-items: center; gap: 4px; padding: 8px 4px 6px; text-decoration: none; color: var(--pb-muted); border-top: 5px solid var(--pb-line); font-size: 13px; font-family: var(--pb-display); font-weight: 600; transition: border-color .4s var(--pb-ease), color .3s; }
+.training-progress-steps i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; background: var(--pb-old-bg); display: grid; place-items: center; font-size: 12px; transition: background .4s, color .4s; }
+.training-progress-steps a.done { border-top-color: var(--pb-agent); color: var(--pb-ink); }
+.training-progress-steps a.done i { background: var(--pb-agent); color: #fff; }
+.training-progress-steps a:hover span { color: var(--pb-ink); }
 
+/* ---------- Lesson layout ---------- */
+.training-lesson { scroll-margin-top: 56px; }
+.training-lhead { margin-bottom: 22px; }
+.training-time { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.training-time span { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--pb-line); background: #fff; font-size: 14px; color: var(--pb-body); }
+.training-time .tot { background: var(--pb-ink); border-color: var(--pb-ink); color: #fff; font-family: var(--pb-display); font-weight: 700; }
+.training-time .training-badge { background: var(--pb-agent-bg); border-color: var(--pb-agent-bg); color: var(--pb-agent); font-family: var(--pb-display); font-weight: 700; }
+.training-time .training-badge[hidden] { display: none; }
+.training-concept { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; align-items: start; margin-bottom: 26px; }
+.training-concept-main { display: grid; gap: 12px; max-width: 46em; }
+.training-points { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.training-points .pb-chip, .training-points .pb-file, .training-aside .pb-file { white-space: normal; vertical-align: 1px; }
+.training-concept code, .training-act code { font-family: var(--pb-mono); font-size: .88em; background: var(--pb-old-bg); padding: 1px 6px; border-radius: 5px; }
+.training-aside { background: #fff; border: 1px solid var(--pb-line); border-left: 4px solid var(--pb-agent); border-radius: 14px; padding: 18px 20px; display: grid; gap: 8px; font-size: 16px; }
+.training-lesson.soft .training-aside { border-color: transparent; border-left-color: var(--pb-agent); box-shadow: var(--pb-shadow); }
+.training-aside > b { font-family: var(--pb-display); color: var(--pb-ink); }
+.training-aside ul, .training-aside ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.training-more { font-family: var(--pb-display); font-weight: 600; font-size: 15px; color: var(--pb-red); text-decoration: none; }
+.training-more::after { content: " \2192"; }
+.training-more:hover { text-decoration: underline; }
+
+/* ---------- Activity shell (shared by the factory) ---------- */
+.training-act { background: #fff; border-radius: 20px; box-shadow: var(--pb-shadow); border-top: 5px solid var(--pb-gate); overflow: hidden; transition: border-color .4s; }
+.training-act.is-done { border-top-color: var(--pb-agent); }
+.training-act-head { padding: 22px 26px 6px; display: grid; gap: 6px; }
+.training-act-tag { font-family: var(--pb-display); font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--pb-gate); }
+.training-act.is-done .training-act-tag { color: var(--pb-agent); }
+.training-act-head h3 { font-size: 22px; }
+.training-act-head p { color: var(--pb-muted); font-size: 16px; }
+.training-act-body { padding: 16px 26px 20px; }
+.training-act-foot { padding: 16px 26px 20px; background: var(--pb-soft); border-top: 1px solid var(--pb-line); display: grid; gap: 12px; }
+.training-fb { min-height: 3em; font-size: 16px; color: var(--pb-body); padding: 10px 14px; border-radius: 10px; background: #fff; border-left: 4px solid var(--pb-line); }
+.training-fb.ok { border-left-color: var(--pb-agent); background: #f0fdfa; }
+.training-fb.ok b { color: var(--pb-agent); }
+.training-fb.no { border-left-color: var(--pb-human); background: #fff1f2; }
+.training-fb.no b { color: var(--pb-human); }
+.training-fb.pop { animation: training-pop .3s var(--pb-ease); }
+.training-retry { font-weight: 700; color: var(--pb-ink); }
+.training-complete { font-size: 16px; padding: 12px 14px; border-radius: 10px; background: var(--pb-agent-bg); color: #115e59; animation: pb-fade .4s var(--pb-ease); }
+.training-complete a { color: #115e59; font-weight: 700; font-family: var(--pb-display); }
+.training-act-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.training-score { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--pb-muted); flex: 1; min-width: 200px; }
+.training-score-bar { flex: 1; max-width: 220px; height: 8px; border-radius: 4px; background: var(--pb-line); overflow: hidden; }
+.training-score-bar i { display: block; height: 100%; width: 0; background: var(--pb-agent); transition: width .5s var(--pb-ease); }
+.training-act button { font: inherit; color: inherit; }
+.training-act button[aria-disabled="true"] { cursor: default; }
+.training-act .shake { animation: training-shake .38s; }
+@keyframes training-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+@keyframes training-pop { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 1: sort ---------- */
+.training-pool { display: flex; flex-wrap: wrap; gap: 8px; min-height: 12px; margin-bottom: 16px; }
+.training-card { text-align: left; font-size: 15px !important; line-height: 1.35; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--pb-line); background: #fff; cursor: pointer; max-width: 100%; transition: border-color .2s, box-shadow .2s, transform .2s var(--pb-ease); }
+.training-card:hover { border-color: var(--pb-ink); }
+.training-card[aria-pressed="true"] { border-color: var(--pb-gate); box-shadow: 0 0 0 3px var(--pb-gate-bg); transform: translateY(-2px); }
+.training-bins { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.training-bin { border-radius: 14px; padding: 10px; min-height: 120px; display: grid; gap: 8px; align-content: start; }
+.training-bin.old { background: var(--pb-old-bg); }
+.training-bin.new { background: #f0fdfa; }
+.training-bin-btn { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px dashed var(--pb-old); background: #fff; cursor: pointer; }
+.training-bin-btn small { font-size: 12px; color: var(--pb-muted); }
+.training-bin-btn:disabled { cursor: default; opacity: .75; }
+.training-bin-btn:not(:disabled) { border-style: solid; border-color: var(--pb-gate); }
+.training-bin-btn:not(:disabled):hover { background: var(--pb-gate-bg); }
+.training-bin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.training-placed { font-size: 14px; line-height: 1.35; padding: 8px 12px; border-radius: 10px; background: #fff; animation: pb-fade .35s var(--pb-ease); }
+.training-bin.old .training-placed { color: var(--pb-muted); border-left: 3px solid var(--pb-old); }
+.training-bin.new .training-placed { color: var(--pb-ink); border-left: 3px solid var(--pb-agent); }
+
+/* ---------- 2: repair a document ---------- */
+.training-doc { border: 1.5px solid var(--pb-file-bg); border-radius: 14px; padding: 16px 18px; background: #fff; display: grid; gap: 12px; }
+.training-doc-bar { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.training-doc-bar .pb-file { white-space: normal; word-break: break-all; }
+.training-doc-meta { font-size: 13px; color: var(--pb-muted); }
+.training-doc h4 { font-size: 18px; }
+.training-doc-sec { display: grid; gap: 6px; }
+.training-doc-sec > b { font-family: var(--pb-display); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-file); }
+.training-opts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.training-opt { text-align: left; font-size: 15px !important; line-height: 1.4; padding: 10px 12px; border-radius: 10px; border: 1.5px dashed var(--pb-old); background: var(--pb-soft); cursor: pointer; transition: border-color .2s, background .2s, opacity .3s; }
+.training-opt:hover { border-color: var(--pb-ink); }
+.training-opt.wrong { border-style: solid; border-color: var(--pb-human); background: #fff1f2; }
+.training-opt.chosen { border-style: solid; border-color: var(--pb-agent); background: #f0fdfa; color: var(--pb-ink); }
+.training-opt.dropped { opacity: .45; text-decoration: line-through; }
+
+/* ---------- 3: trim ---------- */
+.training-trim { display: grid; gap: 14px; }
+.training-gauge { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.training-gauge-label { font-family: var(--pb-display); font-weight: 600; color: var(--pb-ink); }
+.training-gauge-track { position: relative; flex: 1; min-width: 140px; height: 14px; border-radius: 7px; background: var(--pb-line); }
+.training-gauge-track i { display: block; height: 100%; border-radius: 7px; background: var(--pb-human); transition: width .5s var(--pb-ease), background .3s; }
+.training-gauge.fits .training-gauge-track i { background: var(--pb-agent); }
+.training-gauge-track em { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--pb-ink); font-style: normal; font-size: 0; }
+.training-gauge-track em::after { content: "one page"; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--pb-muted); white-space: nowrap; }
+.training-gauge-state { font-family: var(--pb-display); color: var(--pb-human); min-width: 9em; }
+.training-gauge.fits .training-gauge-state { color: var(--pb-agent); }
+.training-trim-doc { font-family: var(--pb-mono); gap: 6px; padding-top: 22px; }
+.training-trim-h { font-weight: 700; color: var(--pb-file); font-size: 14px; margin-top: 6px; }
+.training-trim-list { display: grid; gap: 4px; }
+.training-line { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; text-align: left; width: 100%; font-family: var(--pb-text) !important; font-size: 15px !important; line-height: 1.4; padding: 8px 10px; border: 1.5px solid transparent; border-radius: 8px; background: var(--pb-soft); cursor: pointer; transition: background .2s, border-color .2s, opacity .3s; }
+.training-line:hover { border-color: var(--pb-line); }
+.training-line-txt { flex: 1; min-width: 0; }
+.training-line-act { flex: none; font-family: var(--pb-display); font-weight: 700; font-size: 12px; color: var(--pb-muted); padding: 2px 8px; border-radius: 999px; background: #fff; border: 1px solid var(--pb-line); }
+.training-line[aria-pressed="true"] .training-line-txt { text-decoration: line-through; opacity: .55; }
+.training-line.ok[aria-pressed="true"] { background: #f0fdfa; border-color: var(--pb-agent-bg); }
+.training-line.wrong[aria-pressed="true"] { background: #fff1f2; border-color: var(--pb-human); }
+.training-line.wrong[aria-pressed="true"] .training-line-act { color: var(--pb-human); border-color: var(--pb-human); }
+.training-line[aria-disabled="true"] .training-line-act { display: none; }
+
+/* ---------- 4: order ---------- */
+.training-order { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.training-order-h { display: block; font-family: var(--pb-display); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-muted); margin-bottom: 8px; }
+.training-order-btns { display: grid; gap: 8px; }
+.training-step-btn { text-align: left; font-size: 15px !important; line-height: 1.4; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--pb-line); background: #fff; cursor: pointer; transition: border-color .2s, transform .2s var(--pb-ease); }
+.training-step-btn:hover { border-color: var(--pb-ink); transform: translateX(3px); }
+.training-step-btn .pb-chip, .training-slot .pb-chip { font-size: 11px; padding: 1px 8px; margin-right: 4px; vertical-align: 1px; }
+.training-order-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.training-slot { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; border: 1.5px dashed var(--pb-line); font-size: 15px; line-height: 1.4; color: var(--pb-muted); min-height: 44px; }
+.training-slot-n { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--pb-old-bg); display: grid; place-items: center; font-family: var(--pb-display); font-weight: 700; font-size: 12px; }
+.training-slot.filled { border-style: solid; border-color: var(--pb-agent-bg); background: #f0fdfa; color: var(--pb-ink); animation: pb-fade .35s var(--pb-ease); }
+.training-slot.filled .training-slot-n { background: var(--pb-agent); color: #fff; }
+
+/* ---------- 5: tag ---------- */
+.training-tag { display: grid; gap: 8px; }
+.training-tag-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--pb-soft); border-left: 4px solid var(--pb-line); transition: border-color .3s, background .3s; }
+.training-tag-row.is-human { border-left-color: var(--pb-human); background: #fff1f2; }
+.training-tag-row.is-agent { border-left-color: var(--pb-agent); background: #f0fdfa; }
+.training-tag-row.is-gate { border-left-color: var(--pb-gate); background: #fffbeb; }
+.training-tag-txt { font-size: 15px; line-height: 1.4; color: var(--pb-ink); }
+.training-tag-opts { display: flex; gap: 6px; }
+.training-tag-btn { font-family: var(--pb-display) !important; font-weight: 700; font-size: 13px !important; padding: 6px 12px; border-radius: 999px; border: 1.5px solid currentColor; background: #fff; cursor: pointer; transition: background .2s, opacity .3s; }
+.training-tag-btn.human { color: var(--pb-human) !important; }
+.training-tag-btn.agent { color: var(--pb-agent) !important; }
+.training-tag-btn.gate { color: var(--pb-gate) !important; }
+.training-tag-btn.human:hover, .training-tag-btn.human[aria-pressed="true"] { background: var(--pb-human-bg); }
+.training-tag-btn.agent:hover, .training-tag-btn.agent[aria-pressed="true"] { background: var(--pb-agent-bg); }
+.training-tag-btn.gate:hover, .training-tag-btn.gate[aria-pressed="true"] { background: var(--pb-gate-bg); }
+.training-tag-btn.wrong { text-decoration: line-through; opacity: .55; }
+.training-tag-row.fixed .training-tag-btn[aria-pressed="false"] { opacity: .3; }
+
+/* ---------- 6: bands ---------- */
+.training-bands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.training-band-card { border: 1px solid var(--pb-line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; align-content: start; transition: border-color .3s, box-shadow .3s; }
+.training-band-card.fixed { border-color: var(--pb-agent); box-shadow: 0 0 0 2px var(--pb-agent-bg); }
+.training-band-h { font-family: var(--pb-display); color: var(--pb-ink); font-size: 15px; }
+.training-band-note { font-size: 14px; color: var(--pb-gate); font-weight: 700; }
+.training-chart { display: block; width: 100%; height: auto; }
+.training-chart .b1 { fill: #f1f5f9; }
+.training-chart .b2 { fill: var(--pb-gate-bg); }
+.training-chart .b3 { fill: var(--pb-human-bg); }
+.training-chart .ln { stroke: #cbd5e1; stroke-width: 1; stroke-dasharray: 3 3; }
+.training-chart .mn { stroke: var(--pb-muted); stroke-width: 1; }
+.training-chart text { font-family: var(--pb-display); font-size: 11px; font-weight: 600; fill: var(--pb-muted); }
+.training-chart text.off { fill: var(--pb-human); font-weight: 700; }
+.training-chart .pl { fill: none; stroke: var(--pb-file); stroke-width: 1.8; stroke-linejoin: round; }
+.training-chart .pt { fill: var(--pb-file); }
+.training-chart .pt.last { fill: #fff; stroke: var(--pb-human); stroke-width: 3; }
+.training-band-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.training-band-btn { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--pb-line); background: #fff; cursor: pointer; transition: border-color .2s, background .2s, opacity .3s; }
+.training-band-btn b { font-family: var(--pb-display); font-size: 14px; color: var(--pb-ink); line-height: 1.2; }
+.training-band-btn small { font-size: 12px; color: var(--pb-muted); line-height: 1.25; }
+.training-band-btn:hover { border-color: var(--pb-ink); }
+.training-band-btn.wrong { border-color: var(--pb-human); background: #fff1f2; }
+.training-band-btn[aria-pressed="true"] { border-color: var(--pb-agent); background: #f0fdfa; }
+.training-band-card.fixed .training-band-btn[aria-pressed="false"] { opacity: .4; }
+
+/* inline copy of the feedback, next to the item (mainly for phones) */
+.training-inline-fb { grid-column: 1 / -1; font-size: 14px; line-height: 1.4; margin: 2px 0 0; padding: 6px 10px; border-radius: 8px; animation: pb-fade .3s var(--pb-ease); }
+.training-inline-fb.ok { background: #f0fdfa; color: #115e59; }
+.training-inline-fb.no { background: #fff1f2; color: #9f1239; }
+@media (min-width: 961px) { .training-inline-fb { display: none; } }
+
+/* ---------- closing ---------- */
+.training-close-box { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.training-close-box > div { flex: 1; min-width: 0; max-width: 40em; }
+.training-close .pb-kicker { color: #fda4af; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .training-agenda, .training-concept { grid-template-columns: minmax(0, 1fr); }
+  .training-bands { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .training-act-head, .training-act-body, .training-act-foot { padding-left: 16px; padding-right: 16px; }
+  .training-progress { padding: 14px 12px; }
+  .training-progress-steps span { display: none; }
+  .training-opts, .training-order { grid-template-columns: minmax(0, 1fr); }
+  .training-bins { grid-template-columns: minmax(0, 1fr); }
+  .training-bin { min-height: 0; }
+  .training-bin-btn small { display: none; }
+  .training-tag-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .training-band-opts { grid-template-columns: minmax(0, 1fr); }
+  .training-band-btn { grid-template-columns: auto 1fr; align-items: baseline; gap: 8px; }
+  .training-doc { padding: 14px 12px; }
+  .training-score { min-width: 0; }
+  .training-close-btn { width: 100%; justify-content: center; }
+}
+/* Training exam. Every selector starts with .training-exam- */
+.training-exam-section { scroll-margin-top: 72px; }
+.training-exam-card { position: relative; background: #fff; border: 1px solid var(--pb-line); border-radius: 20px; box-shadow: var(--pb-shadow); padding: 28px; }
+.training-exam-card [hidden] { display: none !important; }
+.training-exam-card [data-exam-screen] { scroll-margin-top: 84px; }
+.training-exam-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.training-exam-card .pb-file { white-space: normal; font-size: .92em; padding: 0 6px 0 5px; vertical-align: baseline; }
+.training-exam-h3 { font-size: 20px; margin: 26px 0 10px; }
+.training-exam-h4 { font-size: 17px; margin: 0 0 12px; }
+
+/* Start screen */
+.training-exam-facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.training-exam-facts li { background: var(--pb-soft); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; }
+.training-exam-facts b { font-family: var(--pb-display); font-size: 28px; font-weight: 800; color: var(--pb-ink); line-height: 1.1; }
+.training-exam-facts span { font-size: 14px; color: var(--pb-muted); }
+.training-exam-rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 48em; }
+.training-exam-last { margin-top: 18px !important; font-size: 15px; color: var(--pb-muted); }
+.training-exam-go { margin-top: 22px; }
+
+/* Bar with timer and progress */
+.training-exam-bar { position: sticky; top: 72px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: -10px -10px 20px; padding: 10px 14px 14px; background: #fff; border-radius: 12px; border-bottom: 1px solid var(--pb-line); }
+.training-exam-timer { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--pb-ink); color: #cbd5e1; font-size: 14px; transition: background .3s, color .3s; }
+.training-exam-timer b { font-family: var(--pb-mono); font-size: 20px; color: #fff; font-variant-numeric: tabular-nums; }
+.training-exam-timer.training-exam-low { background: var(--pb-gate-bg); color: var(--pb-gate); }
+.training-exam-timer.training-exam-low b { color: #92400e; }
+.training-exam-timer.training-exam-crit { background: var(--pb-red); color: #fee2e2; }
+.training-exam-timer.training-exam-crit b { color: #fff; }
+.training-exam-progress { font-size: 14px; color: var(--pb-muted); }
+.training-exam-track { position: absolute; left: 14px; right: 14px; bottom: 6px; height: 3px; border-radius: 3px; background: var(--pb-line); overflow: hidden; }
+.training-exam-track i { display: block; height: 100%; width: 0; background: var(--pb-agent); transition: width .4s var(--pb-ease); }
+
+/* Layout */
+.training-exam-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; align-items: start; }
+.training-exam-qhead { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-bottom: 10px; }
+.training-exam-qnum { font-family: var(--pb-display); font-weight: 700; font-size: 14px; color: var(--pb-muted); }
+.training-exam-tag { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--pb-line); font-size: 13px; font-weight: 700; color: var(--pb-body); font-family: var(--pb-display); }
+.training-exam-flagnote { padding: 2px 10px; border-radius: 999px; background: var(--pb-gate-bg); color: #92400e; font-size: 13px; font-weight: 700; font-family: var(--pb-display); }
+.training-exam-prompt { font-size: 21px; font-weight: 700; line-height: 1.35; margin-bottom: 18px !important; }
+.training-exam-prompt:focus { outline: none; }
+.training-exam-prompt:focus-visible { outline: 3px solid var(--pb-gate); outline-offset: 4px; border-radius: 4px; }
+.training-exam-in { animation: pb-fade .35s var(--pb-ease); }
+
+/* Pick one and select all */
+.training-exam-choices { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
+.training-exam-opt { display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border: 1.5px solid var(--pb-line); border-radius: 12px; cursor: pointer; transition: border-color .2s, background .2s; }
+.training-exam-opt:hover { border-color: #94a3b8; }
+.training-exam-opt input { flex: none; width: 18px; height: 18px; margin-top: 4px; accent-color: var(--pb-ink); }
+.training-exam-opt:has(input:checked) { border-color: var(--pb-ink); background: var(--pb-soft); }
+.training-exam-opt:has(input:focus-visible) { outline: 3px solid var(--pb-gate); outline-offset: 2px; }
+
+/* Put in order */
+.training-exam-hint { font-size: 14px; color: var(--pb-muted); margin-bottom: 12px !important; }
+.training-exam-order { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.training-exam-order li { display: flex; gap: 12px; align-items: center; padding: 10px 10px 10px 12px; border: 1.5px solid var(--pb-line); border-radius: 12px; background: #fff; }
+.training-exam-pos { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--pb-ink); color: #fff; font-family: var(--pb-display); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+.training-exam-otext { flex: 1; min-width: 0; }
+.training-exam-moves { flex: none; display: flex; gap: 6px; }
+.training-exam-move { width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--pb-line); background: #fff; color: var(--pb-ink); font-size: 18px; font-weight: 700; cursor: pointer; }
+.training-exam-move:hover:not(:disabled) { border-color: var(--pb-ink); }
+.training-exam-move:disabled { opacity: .3; cursor: default; }
+.training-exam-moved { animation: training-exam-nudge .4s var(--pb-ease); }
+@keyframes training-exam-nudge { from { background: var(--pb-agent-bg); } to { background: #fff; } }
+.training-exam-keep { margin-top: 12px; font-size: 14px; padding: 8px 14px; }
+
+/* Match */
+.training-exam-match { display: grid; gap: 10px; }
+.training-exam-mrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; align-items: center; padding: 12px 14px; border: 1.5px solid var(--pb-line); border-radius: 12px; }
+.training-exam-mrow select { width: 100%; min-width: 0; font: inherit; font-size: 15px; padding: 9px 10px; border: 1.5px solid var(--pb-line); border-radius: 10px; background: #fff; color: var(--pb-ink); }
+.training-exam-mrow select:focus-visible { outline: 3px solid var(--pb-gate); outline-offset: 2px; }
+
+/* Nav */
+.training-exam-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--pb-line); }
+.training-exam-nav [data-next] { margin-left: auto; }
+.training-exam-flag[aria-pressed="true"] { background: var(--pb-gate-bg); border-color: var(--pb-gate); color: #92400e; }
+
+/* Side: map and submit */
+.training-exam-side { background: var(--pb-soft); border-radius: 14px; padding: 18px; }
+.training-exam-map { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.training-exam-mapbtn { position: relative; width: 100%; aspect-ratio: 1; min-height: 36px; border-radius: 10px; border: 1.5px solid var(--pb-line); background: #fff; color: var(--pb-body); font-family: var(--pb-display); font-weight: 700; font-size: 14px; cursor: pointer; }
+.training-exam-mapbtn.a { background: var(--pb-ink); border-color: var(--pb-ink); color: #fff; }
+.training-exam-mapbtn.f::after { content: ""; position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--pb-gate); border: 2px solid #fff; }
+.training-exam-mapbtn[aria-current="step"] { box-shadow: 0 0 0 3px var(--pb-red); }
+.training-exam-key { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--pb-muted); }
+.training-exam-key li { display: inline-flex; align-items: center; gap: 6px; }
+.training-exam-key i { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid var(--pb-line); background: #fff; }
+.training-exam-key i.a { background: var(--pb-ink); border-color: var(--pb-ink); }
+.training-exam-key i.f { border-radius: 50%; background: var(--pb-gate); border-color: var(--pb-gate); }
+.training-exam-key i.c { box-shadow: 0 0 0 2px var(--pb-red); }
+.training-exam-submit { width: 100%; justify-content: center; margin-top: 18px; }
+.training-exam-confirm { margin-top: 18px; padding: 14px; border-radius: 12px; background: #fff; border: 1.5px solid var(--pb-ink); font-size: 15px; }
+.training-exam-confirm.warn { border-color: var(--pb-gate); background: var(--pb-gate-bg); }
+.training-exam-confirm p + p { margin-top: 6px; }
+.training-exam-ctitle:focus { outline: none; }
+.training-exam-cbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.training-exam-cbtns .pb-btn { font-size: 14px; padding: 8px 14px; }
+
+/* Results */
+.training-exam-score { display: flex; gap: 24px; align-items: center; padding: 22px; border-radius: 16px; margin-bottom: 28px; }
+.training-exam-score.pass { background: var(--pb-agent-bg); }
+.training-exam-score.fail { background: var(--pb-human-bg); }
+.training-exam-ring { position: relative; flex: none; width: 110px; height: 110px; }
+.training-exam-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.training-exam-ring circle { fill: none; stroke-width: 10; }
+.training-exam-ring .bg { stroke: rgba(255,255,255,.8); }
+.training-exam-ring .fg { stroke: var(--pb-ink); stroke-linecap: round; stroke-dasharray: 326.7; stroke-dashoffset: 326.7; transition: stroke-dashoffset 1s var(--pb-ease); }
+.training-exam-drawn .training-exam-ring .fg { stroke-dashoffset: calc(326.7 * (1 - var(--p))); }
+.training-exam-score.pass .fg { stroke: var(--pb-agent); }
+.training-exam-score.fail .fg { stroke: var(--pb-human); }
+.training-exam-ring b { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--pb-display); font-size: 34px; font-weight: 800; color: var(--pb-ink); }
+.training-exam-rtitle { font-size: 26px; font-weight: 800; margin-bottom: 4px !important; }
+.training-exam-rtitle:focus { outline: none; }
+.training-exam-meta { font-size: 15px; color: var(--pb-muted); margin-top: 4px !important; }
+.training-exam-break { list-style: none; margin: 0 0 28px; padding: 0; display: grid; gap: 8px; }
+.training-exam-break li { display: grid; grid-template-columns: 170px minmax(0, 1fr) 60px 140px; gap: 14px; align-items: center; font-size: 15px; }
+.training-exam-bname { font-family: var(--pb-display); font-weight: 600; color: var(--pb-ink); }
+.training-exam-bbar { height: 10px; border-radius: 6px; background: var(--pb-line); overflow: hidden; }
+.training-exam-bbar i { display: block; height: 100%; width: 0; border-radius: 6px; background: var(--pb-agent); transition: width .8s var(--pb-ease); }
+.training-exam-drawn .training-exam-bbar i { width: var(--w); }
+.training-exam-break li.miss .training-exam-bbar i { background: var(--pb-gate); }
+.training-exam-bnum { color: var(--pb-muted); font-variant-numeric: tabular-nums; }
+.training-exam-blink { font-size: 14px; color: var(--pb-red); font-weight: 700; }
+.training-exam-rhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.training-exam-only { font-size: 14px; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.training-exam-review { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.training-exam-onlymiss .training-exam-ritem.ok { display: none; }
+.training-exam-ritem { border: 1px solid var(--pb-line); border-left: 5px solid var(--pb-agent); border-radius: 12px; padding: 16px 18px; }
+.training-exam-ritem.miss { border-left-color: var(--pb-human); }
+.training-exam-rtop { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; }
+.training-exam-status { margin-left: auto; font-family: var(--pb-display); font-size: 13px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--pb-agent-bg); color: var(--pb-agent); }
+.training-exam-ritem.miss .training-exam-status { background: var(--pb-human-bg); color: var(--pb-human); }
+.training-exam-rq { color: var(--pb-ink); font-weight: 700; }
+.training-exam-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; margin-top: 10px; font-size: 15px; }
+.training-exam-cols > div > b { display: block; font-family: var(--pb-display); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--pb-muted); }
+.training-exam-ans { margin: 4px 0 0; padding-left: 20px; }
+.training-exam-why { margin-top: 10px !important; font-size: 15px; }
+.training-exam-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px !important; font-size: 14px; font-weight: 700; }
+.training-exam-links a { color: var(--pb-red); }
+.training-exam-again { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-top: 26px; font-size: 15px; color: var(--pb-muted); }
+
+@media (max-width: 900px) {
+  .training-exam-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .training-exam-map { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .training-exam-break li { grid-template-columns: 120px minmax(0, 1fr) 56px; }
+  .training-exam-break .training-exam-blink { grid-column: 1 / -1; margin-top: -4px; }
+  .training-exam-break .training-exam-blink:empty { display: none; }
+}
+@media (max-width: 640px) {
+  .training-exam-card { padding: 18px 14px; border-radius: 16px; }
+  .training-exam-facts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .training-exam-facts li { flex-direction: row; align-items: baseline; gap: 10px; padding: 12px 14px; }
+  .training-exam-facts b { font-size: 22px; }
+  .training-exam-bar { top: 68px; margin: -6px -6px 16px; padding: 8px 8px 12px; }
+  .training-exam-prompt { font-size: 18px; }
+  .training-exam-map { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .training-exam-mapbtn { aspect-ratio: auto; height: 40px; }
+  .training-exam-mrow { grid-template-columns: minmax(0, 1fr); }
+  .training-exam-nav .pb-btn { padding: 10px 14px; }
+  .training-exam-nav [data-flag] { order: 3; width: 100%; justify-content: center; }
+  .training-exam-score { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .training-exam-cols { grid-template-columns: minmax(0, 1fr); }
+  .training-exam-break li { grid-template-columns: 90px minmax(0, 1fr) 50px; gap: 10px; font-size: 14px; }
+  .training-exam-status { margin-left: 0; }
+}
+.training-exam-card button, .training-exam-card input, .training-exam-card select, .training-exam-prompt { scroll-margin-top: 150px; scroll-margin-bottom: 20px; }
 </style>
 </head>
 <body>
@@ -33,8 +422,305 @@
   </section>
 
   <!-- PAGE CONTENT START -->
+  <!-- Lessons: intro, agenda, and progress -->
+  <section class="pb-section training-intro" id="training-lessons">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">How this training works</span>
+        <h2>Six lessons, then an exam</h2>
+        <p class="pb-lede">Each lesson takes about 5 minutes: a short idea to read, then one activity that makes you use it. Every activity tells you right away why an answer is right or wrong, and you can try again as often as you like.</p>
+      </div>
+      <div class="training-agenda pb-reveal d1">
+        <ol class="training-agenda-list">
+          <li><a href="#training-lesson-1"><b>The shift</b><span>5 min</span></a></li>
+          <li><a href="#training-lesson-2"><b>Plan: capture as intent.md</b><span>5 min</span></a></li>
+          <li><a href="#training-lesson-3"><b>Design and build</b><span>5 min</span></a></li>
+          <li><a href="#training-lesson-4"><b>Test: a feedback loop and evals</b><span>5 min</span></a></li>
+          <li><a href="#training-lesson-5"><b>Deploy: review, gates, and pipelines</b><span>5 min</span></a></li>
+          <li><a href="#training-lesson-6"><b>Maintain: close the loop</b><span>5 min</span></a></li>
+        </ol>
+        <div class="training-budget">
+          <div class="training-budget-bar" aria-hidden="true"><i class="l"></i><i class="e"></i></div>
+          <ul>
+            <li><span class="training-dot l" aria-hidden="true"></span><b>30 min</b> of lessons (6 &times; 5 min)</li>
+            <li><span class="training-dot e" aria-hidden="true"></span><b>15 min</b> exam at the end</li>
+            <li><b>45 min</b> in total</li>
+          </ul>
+        </div>
+      </div>
+      <div class="training-progress pb-reveal d2" data-training-progress>
+        <div class="training-progress-top">
+          <b>Your progress</b>
+          <span data-training-count role="status" aria-live="polite">0 of 6 lessons done</span>
+        </div>
+        <ol class="training-progress-steps">
+          <li><a href="#training-lesson-1" data-training-seg="1"><i>1</i><span>Shift</span></a></li>
+          <li><a href="#training-lesson-2" data-training-seg="2"><i>2</i><span>Plan</span></a></li>
+          <li><a href="#training-lesson-3" data-training-seg="3"><i>3</i><span>Build</span></a></li>
+          <li><a href="#training-lesson-4" data-training-seg="4"><i>4</i><span>Test</span></a></li>
+          <li><a href="#training-lesson-5" data-training-seg="5"><i>5</i><span>Deploy</span></a></li>
+          <li><a href="#training-lesson-6" data-training-seg="6"><i>6</i><span>Maintain</span></a></li>
+        </ol>
+        <div class="pb-legend">
+          <span class="pb-chip human">A person decides</span>
+          <span class="pb-chip agent">Claude does the work</span>
+          <span class="pb-chip gate">A gate or check</span>
+          <span class="pb-file">a committed file</span>
+          <span class="pb-chip old">The traditional way</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <!-- Lesson 1 -->
+  <section class="pb-section soft training-lesson" id="training-lesson-1" data-training-lesson="1">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 1 of 6</span>
+        <h2>The shift</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <p>AI now writes code fast. The process around the code has not kept pace: approval gates, reviews, and handoffs still run at human speed. So the bottleneck moves to plan, review, test, and deploy.</p>
+          <ul class="training-points">
+            <li>Most teams run six stages: <b>plan, design, build, test, deploy, and maintain</b>.</li>
+            <li>In the AI-native SDLC the straight line becomes a <b>loop</b>, with AI at each stage and handovers automated.</li>
+            <li>Each stage ends by committing a file, and the next stage starts by reading it: <span class="pb-file">intent.md</span> <span class="pb-file">spec.md</span> <span class="pb-file">plan.md</span>, then the diff and tests, the PR, and the incident record.</li>
+            <li>The chain of commits is the audit trail: who asked, what the agent made, and who approved.</li>
+            <li>People stay accountable for every decision that needs judgment.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>Triggers between stages</b>
+          <ul>
+            <li>An accepted <span class="pb-file">intent.md</span> starts design.</li>
+            <li>An approved <span class="pb-file">spec.md</span> starts plan mode.</li>
+            <li>A merged PR starts the pipeline.</li>
+            <li>A breached control band writes the next <span class="pb-file">intent.md</span>.</li>
+          </ul>
+          <a class="training-more" href="{{BP}}/">Read the overview</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="sort" data-training-config="shift" data-training-for="1"></div>
+    </div>
+  </section>
 
+  <!-- Lesson 2 -->
+  <section class="pb-section training-lesson" id="training-lesson-2" data-training-lesson="2">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 2 of 6</span>
+        <h2>Plan: capture as intent.md</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <p><span class="pb-file">intent.md</span> is a short, version-controlled file that says what is wanted, why, and under which constraints. People can read it, and the next stage can act on it.</p>
+          <ul class="training-points">
+            <li>It starts from an idea, a ticket, or an alert.</li>
+            <li><span class="pb-chip human">Originator</span> describes the problem in their own words. No formal language needed.</li>
+            <li><span class="pb-chip agent">Claude</span> asks the analyst's questions: scope, users, constraints, and what success looks like. Then it writes the file from the team's template.</li>
+            <li><span class="pb-chip human">Product owner</span> reviews and corrects it before it is committed. Accepting it starts design.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>The template's five sections</b>
+          <ol>
+            <li>Problem</li>
+            <li>Proposed outcome</li>
+            <li>Affected users and systems</li>
+            <li>Constraints</li>
+            <li>Open questions</li>
+          </ol>
+          <a class="training-more" href="{{BP}}/plan/">Read Stage 1: Plan</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="repair" data-training-config="intent" data-training-for="2"></div>
+    </div>
+  </section>
+
+  <!-- Lesson 3 -->
+  <section class="pb-section soft training-lesson" id="training-lesson-3" data-training-lesson="3">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 3 of 6</span>
+        <h2>Design and build</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <ul class="training-points">
+            <li><b>Spec.</b> <span class="pb-chip agent">Claude</span> turns the approved <span class="pb-file">intent.md</span> into <span class="pb-file">spec.md</span>, guided by the team's skills for brand, security, compliance, and UX. It flags areas of concern. The product owner reviews the spec and does not write it.</li>
+            <li><b>Plan mode first.</b> In plan mode Claude can read the code and cannot change it. The plan names the files, the order of work, and the tests. The engineer corrects it and commits <span class="pb-file">plan.md</span>.</li>
+            <li><b>CLAUDE.md.</b> What a new joiner needs on day one: commands, the conventions that matter, and what Claude keeps getting wrong. Claude reads all of it at the start of every session. Keep it <b>under a page</b>. When Claude makes a mistake twice, the fix goes in.</li>
+            <li><b>Skill or hook?</b> A skill holds a policy to apply consistently, and it is advisory. A hook is deterministic, for rules that must always hold.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>Parallel sessions</b>
+          <ul>
+            <li>Each session works in its own Git worktree.</li>
+            <li>Start with 2 or 3 sessions.</li>
+            <li>Add more only while review keeps up.</li>
+          </ul>
+          <a class="training-more" href="{{BP}}/design/">Read Stage 2: Design</a>
+          <a class="training-more" href="{{BP}}/build/">Read Stage 3: Build</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="trim" data-training-config="claudemd" data-training-for="3"></div>
+    </div>
+  </section>
+
+  <!-- Lesson 4 -->
+  <section class="pb-section training-lesson" id="training-lesson-4" data-training-lesson="4">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 4 of 6</span>
+        <h2>Test: a feedback loop and evals</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <p>Always give Claude a way to check its own work: tests, a build, or a screenshot diff. The session checks and fixes its work before an engineer sees it.</p>
+          <ul class="training-points">
+            <li>Wrap each check in one command, such as <code>make test</code>, and list it in <span class="pb-file">CLAUDE.md</span>.</li>
+            <li>Set a target you can measure, such as "all tests in test_status.py pass".</li>
+            <li>For a bug, write the failing test first. Then Claude makes it pass without editing the test.</li>
+            <li>Protect the loop: <span class="pb-chip gate">a hook</span> blocks edits to test files during a fix.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>Continuous evals in CI</b>
+          <ul>
+            <li>Collect 20 to 50 real tasks with their accepted outcomes.</li>
+            <li>Run them in CI on a schedule and on any change to <span class="pb-file">CLAUDE.md</span>, skills, or hooks.</li>
+            <li>Each production incident gets an eval that stays as a regression test.</li>
+          </ul>
+          <a class="training-more" href="{{BP}}/test/">Read Stage 4: Test</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="order" data-training-config="bugfix" data-training-for="4"></div>
+    </div>
+  </section>
+
+  <!-- Lesson 5 -->
+  <section class="pb-section soft training-lesson" id="training-lesson-5" data-training-lesson="5">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 5 of 6</span>
+        <h2>Deploy: review, gates, and pipelines</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <ul class="training-points">
+            <li><b>AI in PR review.</b> <span class="pb-chip agent">Claude</span> reviews every PR in the passes set in <span class="pb-file">REVIEW.md</span>: bugs, security, and compliance with <span class="pb-file">spec.md</span> and <span class="pb-file">plan.md</span>. It ranks findings as Important or Nit, with at most five nits per review.</li>
+            <li>Findings do not approve or block a PR on their own. <span class="pb-chip human">A code owner</span> approves through branch protection. The agent that wrote the code has no way to approve it.</li>
+            <li><b>Hooks as approval gates.</b> <span class="pb-chip gate">A hook</span> is a script that runs before Claude acts and can allow, ask, or block. A block names the route to approval.</li>
+            <li><b>CI/CD.</b> Claude runs in the pipeline for judgment steps, in a sandbox. Everything it writes arrives as a PR. Deploy, status, and rollback are tools per environment.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>Autonomy by environment</b>
+          <ul>
+            <li><b>Dev:</b> the agent deploys freely.</li>
+            <li><b>Staging:</b> the hook asks, or allows from the pipeline on main.</li>
+            <li><b>Production:</b> the agent prepares the release and the release manager authorizes it.</li>
+            <li>Rollback is the most rehearsed path.</li>
+          </ul>
+          <a class="training-more" href="{{BP}}/deploy/">Read Stage 5: Deploy</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="tag" data-training-config="deploy" data-training-for="5"></div>
+    </div>
+  </section>
+
+  <!-- Lesson 6 -->
+  <section class="pb-section training-lesson" id="training-lesson-6" data-training-lesson="6">
+    <div class="pb-wrap">
+      <div class="training-lhead pb-reveal">
+        <span class="pb-kicker">Lesson 6 of 6</span>
+        <h2>Maintain: close the loop</h2>
+        <p class="training-time"><span class="tot">5 min</span><span>Read 2 min</span><span>Activity 3 min</span><span class="training-badge" data-training-badge hidden>Done</span></p>
+      </div>
+      <div class="training-concept pb-reveal d1">
+        <div class="training-concept-main">
+          <p>A deterministic script watches one metric. No model is involved in detection. The baseline is the mean of the last 30 days of hourly readings, and sigma (&sigma;) is the standard deviation.</p>
+          <ul class="training-points">
+            <li><b>1&sigma;:</b> only log. Readings land here often by chance.</li>
+            <li><b>2&sigma;:</b> Claude diagnoses, read-only.</li>
+            <li><b>3&sigma;:</b> Claude may act, only by opening a PR into the review gate or by running a pre-approved runbook such as rollback.</li>
+            <li><b>Slow drift</b> counts as 2&sigma;: four of the last five readings above 1&sigma;, or eight in a row above the mean.</li>
+            <li>Claude writes its diagnosis as a new <span class="pb-file">intent.md</span>. <span class="pb-chip human">The service owner</span> triages it: fix now, schedule, or dismiss.</li>
+          </ul>
+        </div>
+        <aside class="training-aside">
+          <b>Pick your first play</b>
+          <p>These six need nothing else first:</p>
+          <ul>
+            <li>Capture as intent.md</li>
+            <li>Plan mode first</li>
+            <li>CLAUDE.md</li>
+            <li>Skills</li>
+            <li>A feedback loop</li>
+            <li>Hooks as approval gates</li>
+          </ul>
+          <a class="training-more" href="{{BP}}/maintain/">Read Stage 6: Maintain</a>
+          <a class="training-more" href="{{BP}}/roadmap/">See the roadmap</a>
+        </aside>
+      </div>
+      <div class="training-mount pb-reveal d2" data-training-activity="bands" data-training-config="bands" data-training-for="6"></div>
+    </div>
+  </section>
+
+  <!-- Lessons: closing -->
+  <section class="pb-section dark training-close" id="training-lessons-end">
+    <div class="pb-wrap">
+      <div class="training-close-box pb-reveal">
+        <div>
+          <span class="pb-kicker">Lessons done?</span>
+          <h2>Now check what stuck</h2>
+          <p class="pb-lede" data-training-close-msg>You have 0 of 6 lessons done. You can take the exam at any time.</p>
+        </div>
+        <a class="pb-btn red training-close-btn" href="#training-exam">Start the 15 minute exam</a>
+      </div>
+    </div>
+  </section>
+  <section class="pb-section training-exam-section" id="training-exam" aria-labelledby="training-exam-title">
+    <div class="pb-wrap">
+      <div class="pb-head pb-reveal">
+        <span class="pb-kicker">Exam: 15 minutes</span>
+        <h2 id="training-exam-title">Check what stuck</h2>
+        <p class="pb-lede">Twenty questions on the shift, the loop, and the six stages. Most of them describe a team in a situation and ask what should happen next.</p>
+      </div>
+
+      <div class="training-exam-card" data-exam-root>
+        <div class="training-exam-start" data-exam-screen="start">
+          <ul class="training-exam-facts" aria-label="Exam facts">
+            <li><b>15:00</b><span>time limit</span></li>
+            <li><b>20</b><span>questions</span></li>
+            <li><b>16 of 20</b><span>to pass</span></li>
+          </ul>
+          <h3 class="training-exam-h3">How it works</h3>
+          <ul class="training-exam-rules">
+            <li>You see one question at a time. Use Previous and Next, or jump with the question map.</li>
+            <li>Flag a question to come back to it later.</li>
+            <li>The timer starts when you press Start. At zero, the exam submits itself.</li>
+            <li>Question formats: pick one, select all that apply, put in order, and match. A question counts as right only when every part is right.</li>
+            <li>You see no right or wrong answers until you submit. Then you get your score, a breakdown by stage, and the reason behind every answer.</li>
+            <li>Questions and options are shuffled on each attempt.</li>
+          </ul>
+          <p class="training-exam-last" data-exam-last hidden></p>
+          <button type="button" class="pb-btn red training-exam-go" data-exam-start>Start the exam</button>
+        </div>
+        <div data-exam-screen="quiz" hidden></div>
+        <div data-exam-screen="results" hidden></div>
+        <p class="training-exam-sr" aria-live="polite" aria-atomic="true" data-exam-live></p>
+        <noscript><p>The exam needs JavaScript. The lessons above work without it.</p></noscript>
+      </div>
+    </div>
+  </section>
   <!-- PAGE CONTENT END -->
   <section class="pb-section soft"><div class="pb-wrap">
     <p class="pb-source">Based on Anthropic's <a href="https://academy.claude.com/courses/ai-native-sdlc-playbook">The AI-native SDLC playbook</a> course (Claude Academy). Summarized by Bitovi to guide client transitions.</p>
@@ -44,8 +730,1235 @@
 <!-- @site-footer -->
 <script src="{{BP}}/assets/playbook.js"></script>
 <script>
+(function () {
+  /* ---------- small helpers ---------- */
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function btn(cls, html) { var b = el('button', cls, html); b.type = 'button'; return b; }
+  function bump(node, name) {
+    node.classList.remove(name); void node.offsetWidth; node.classList.add(name);
+  }
+  /* Arrow keys move focus between the buttons of a group. */
+  function arrowGroup(group) {
+    group.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].indexOf(k) === -1) return;
+      var bs = [].slice.call(group.querySelectorAll('button'));
+      var i = bs.indexOf(document.activeElement); if (i === -1) return;
+      e.preventDefault();
+      var n = bs.length;
+      var j = k === 'Home' ? 0 : k === 'End' ? n - 1 : (k === 'ArrowLeft' || k === 'ArrowUp') ? (i + n - 1) % n : (i + 1) % n;
+      bs[j].focus();
+    });
+  }
 
+  /* ---------- lesson progress (localStorage is optional) ---------- */
+  var KEY = 'pb-training-lessons';
+  var done = {};
+  try { (JSON.parse(localStorage.getItem(KEY) || '[]') || []).forEach(function (n) { done[n] = true; }); } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(Object.keys(done))); } catch (e) { /* storage off: fine */ } }
+  function paintProgress() {
+    var n = 0;
+    for (var i = 1; i <= 6; i++) {
+      var on = !!done[i]; if (on) n++;
+      var seg = document.querySelector('[data-training-seg="' + i + '"]');
+      if (seg) { seg.classList.toggle('done', on); seg.setAttribute('aria-label', 'Lesson ' + i + (on ? ', done' : ', not done yet')); }
+      var badge = document.querySelector('#training-lesson-' + i + ' [data-training-badge]');
+      if (badge) badge.hidden = !on;
+    }
+    var c = document.querySelector('[data-training-count]');
+    if (c) c.textContent = n + ' of 6 lessons done';
+    var m = document.querySelector('[data-training-close-msg]');
+    if (m) m.textContent = n === 6 ? 'All six lessons are done. The exam takes about 15 minutes.' : 'You have ' + n + ' of 6 lessons done. You can take the exam at any time.';
+  }
+  function markDone(n) { if (!n || done[n]) return; done[n] = true; save(); paintProgress(); }
 
+  /* ---------- the factory ---------- */
+  var types = {};
+  var Training = {
+    register: function (type, build) { types[type] = build; },
+    /* config: { title, prompt, lesson, ...data for the type } */
+    create: function (type, config) {
+      var build = types[type];
+      if (!build) throw new Error('Unknown activity type: ' + type);
+      var root = el('div', 'training-act training-type-' + type);
+      var head = el('div', 'training-act-head');
+      head.appendChild(el('span', 'training-act-tag', 'Activity &middot; 3 min'));
+      head.appendChild(el('h3', null, config.title));
+      head.appendChild(el('p', null, config.prompt));
+      var body = el('div', 'training-act-body');
+      var foot = el('div', 'training-act-foot');
+      var fb = el('p', 'training-fb');
+      fb.setAttribute('role', 'status'); fb.setAttribute('aria-live', 'polite');
+      fb.textContent = config.hint || 'Pick an answer to get feedback.';
+      var meter = el('div', 'training-score');
+      var meterText = el('span');
+      var meterBar = el('span', 'training-score-bar', '<i></i>');
+      meterBar.setAttribute('aria-hidden', 'true');
+      meter.appendChild(meterText); meter.appendChild(meterBar);
+      var reset = btn('pb-btn ghost training-reset', 'Start over');
+      var row = el('div', 'training-act-row');
+      row.appendChild(meter); row.appendChild(reset);
+      foot.appendChild(fb); foot.appendChild(row);
+      root.appendChild(head); root.appendChild(body); root.appendChild(foot);
+
+      var complete = false;
+      var api = {
+        /* Shared feedback: ok true, false, or null (neutral). */
+        say: function (ok, why, anchor) {
+          var prev = body.querySelector('.training-inline-fb'); if (prev) prev.remove();
+          if (anchor && ok !== null) {
+            var note = el('p', 'training-inline-fb ' + (ok ? 'ok' : 'no'), (ok ? 'Right. ' : 'Not quite. ') + why);
+            note.setAttribute('aria-hidden', 'true');
+            anchor.appendChild(note);
+          }
+          fb.className = 'training-fb ' + (ok === true ? 'ok' : ok === false ? 'no' : '');
+          var lead = ok === true ? '<b>Right.</b> ' : ok === false ? '<b>Not quite.</b> ' : '';
+          fb.innerHTML = lead + why + (ok === false ? ' <span class="training-retry">Try again.</span>' : '');
+          bump(fb, 'pop');
+        },
+        /* Shared score and completion. */
+        score: function (got, total, label, blocked) {
+          meterText.textContent = got + ' of ' + total + ' ' + (label || 'right');
+          meterBar.firstChild.style.width = (total ? Math.round(100 * got / total) : 0) + '%';
+          if (got === total && !blocked && !complete) {
+            complete = true;
+            root.classList.add('is-done');
+            markDone(config.lesson);
+            var next = config.lesson < 6 ? '#training-lesson-' + (config.lesson + 1) : '#training-lessons-end';
+            var nextLabel = config.lesson < 6 ? 'Go to lesson ' + (config.lesson + 1) : 'Go to the exam';
+            var doneMsg = el('p', 'training-complete', '<b>Lesson ' + config.lesson + ' done.</b> ' + (config.wrap || '') + ' <a href="' + next + '">' + nextLabel + '</a>');
+            foot.insertBefore(doneMsg, row);
+          }
+        },
+        el: el, btn: btn, bump: bump, arrowGroup: arrowGroup
+      };
+      function mount() {
+        complete = false;
+        root.classList.remove('is-done');
+        var old = foot.querySelector('.training-complete'); if (old) old.remove();
+        body.innerHTML = '';
+        fb.className = 'training-fb';
+        fb.textContent = config.hint || 'Pick an answer to get feedback.';
+        build(body, config, api);
+      }
+      reset.addEventListener('click', function () {
+        mount();
+        var first = body.querySelector('button:not([aria-disabled="true"])');
+        if (first) first.focus();
+      });
+      mount();
+      return root;
+    }
+  };
+  window.Training = Training;
+
+  /* ---------- type 1: sort cards into two columns ---------- */
+  Training.register('sort', function (body, c, api) {
+    var right = 0, total = c.items.length, picked = null;
+    var pool = el('div', 'training-pool'); pool.setAttribute('aria-label', 'Cards to sort');
+    var bins = el('div', 'training-bins');
+    var binEls = c.bins.map(function (b, i) {
+      var col = el('div', 'training-bin ' + b.cls);
+      var go = btn('training-bin-btn', '<span class="pb-chip ' + b.chip + '">' + b.label + '</span><small>' + (i === 0 ? '&larr; or press Left' : 'or press Right &rarr;') + '</small>');
+      go.setAttribute('aria-label', 'Put the picked card in ' + b.label);
+      go.disabled = true;
+      var list = el('ul', 'training-bin-list');
+      col.appendChild(go); col.appendChild(list);
+      bins.appendChild(col);
+      go.addEventListener('click', function () { place(i); });
+      return { go: go, list: list };
+    });
+    function setPicked(card) {
+      if (picked) picked.setAttribute('aria-pressed', 'false');
+      picked = card;
+      if (card) card.setAttribute('aria-pressed', 'true');
+      binEls.forEach(function (b) { b.go.disabled = !card; });
+    }
+    function place(i) {
+      if (!picked) return;
+      var card = picked, item = c.items[+card.getAttribute('data-i')];
+      if (item.bin === i) {
+        right++;
+        var li = el('li', 'training-placed', item.text);
+        binEls[i].list.appendChild(li);
+        var next = card.nextElementSibling || card.previousElementSibling;
+        setPicked(null);
+        card.remove();
+        api.say(true, item.why);
+        api.score(right, total, 'cards sorted');
+        if (next) next.focus(); else binEls[i].go.blur();
+      } else {
+        setPicked(null);
+        api.bump(card, 'shake');
+        api.say(false, item.why);
+        card.focus();
+      }
+    }
+    c.items.forEach(function (it, i) {
+      var card = btn('training-card', it.text);
+      card.setAttribute('data-i', i);
+      card.setAttribute('aria-pressed', 'false');
+      card.addEventListener('click', function () { setPicked(picked === card ? null : card); });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setPicked(card); place(e.key === 'ArrowLeft' ? 0 : 1); }
+      });
+      pool.appendChild(card);
+    });
+    body.appendChild(pool); body.appendChild(bins);
+    api.score(0, total, 'cards sorted');
+  });
+
+  /* ---------- type 2: repair a document, one section at a time ---------- */
+  Training.register('repair', function (body, c, api) {
+    var right = 0, total = c.sections.length;
+    var doc = el('div', 'training-doc');
+    var bar = el('div', 'training-doc-bar', '<span class="pb-file">' + c.file + '</span><span class="training-doc-meta">' + c.meta + '</span>');
+    doc.appendChild(bar);
+    doc.appendChild(el('h4', null, c.heading));
+    c.sections.forEach(function (s) {
+      var sec = el('div', 'training-doc-sec');
+      sec.appendChild(el('b', null, s.name));
+      var grp = el('div', 'training-opts'); grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', s.name + ': pick the stronger line');
+      s.options.forEach(function (o, j) {
+        var b = btn('training-opt', o);
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () {
+          if (sec.classList.contains('fixed')) return;
+          if (j === s.answer) {
+            right++;
+            sec.classList.add('fixed');
+            [].forEach.call(grp.children, function (x) { x.setAttribute('aria-disabled', 'true'); x.classList.add(x === b ? 'chosen' : 'dropped'); });
+            b.setAttribute('aria-pressed', 'true');
+            api.say(true, s.why, sec);
+            api.score(right, total, 'sections fixed');
+          } else {
+            b.classList.add('wrong');
+            api.bump(b, 'shake');
+            api.say(false, s.why, sec);
+          }
+        });
+        grp.appendChild(b);
+      });
+      api.arrowGroup(grp);
+      sec.appendChild(grp);
+      doc.appendChild(sec);
+    });
+    body.appendChild(doc);
+    api.score(0, total, 'sections fixed');
+  });
+
+  /* ---------- type 3: trim a file until it fits ---------- */
+  Training.register('trim', function (body, c, api) {
+    var cutNeeded = c.lines.filter(function (l) { return !l.keep; }).length;
+    var wrap = el('div', 'training-trim');
+    var doc = el('div', 'training-doc training-trim-doc');
+    doc.appendChild(el('div', 'training-doc-bar', '<span class="pb-file">' + c.file + '</span><span class="training-doc-meta">Select a line to cut it. Select again to restore it.</span>'));
+    var gauge = el('div', 'training-gauge');
+    gauge.innerHTML = '<span class="training-gauge-label">Length</span><span class="training-gauge-track"><i></i><em aria-hidden="true">one page</em></span><b class="training-gauge-state"></b>';
+    var fill = gauge.querySelector('i'), state = gauge.querySelector('b');
+    var mark = gauge.querySelector('em');
+    var keepCount = c.lines.length - cutNeeded;
+    mark.style.left = Math.round(100 * keepCount / c.lines.length) + '%';
+    var lastGroup = null, list = null;
+    var btns = [];
+    c.lines.forEach(function (l, i) {
+      if (l.group !== lastGroup) {
+        lastGroup = l.group;
+        doc.appendChild(el('div', 'training-trim-h', '## ' + l.group));
+        list = el('div', 'training-trim-list'); doc.appendChild(list);
+      }
+      var b = btn('training-line', '<span class="training-line-txt">' + l.text + '</span><span class="training-line-act" aria-hidden="true">Cut</span>');
+      b.setAttribute('aria-pressed', 'false');
+      b.setAttribute('aria-label', 'Cut this line: ' + l.text.replace(/<[^>]+>/g, ''));
+      b.addEventListener('click', function () {
+        if (b.getAttribute('aria-disabled') === 'true') return;
+        var cut = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', String(cut));
+        b.querySelector('.training-line-act').textContent = cut ? 'Restore' : 'Cut';
+        if (cut && l.keep) { b.classList.add('wrong'); api.bump(b, 'shake'); api.say(false, l.why); }
+        else if (cut) { b.classList.add('ok'); api.say(true, l.why); }
+        else { b.classList.remove('wrong', 'ok'); api.say(null, 'Line restored.'); }
+        update();
+      });
+      list.appendChild(b); btns.push(b);
+    });
+    function update() {
+      var cutOk = 0, cutBad = 0, left = 0;
+      btns.forEach(function (b, i) {
+        var cut = b.getAttribute('aria-pressed') === 'true';
+        if (!cut) left++;
+        if (cut && c.lines[i].keep) cutBad++;
+        if (cut && !c.lines[i].keep) cutOk++;
+      });
+      fill.style.width = Math.round(100 * left / c.lines.length) + '%';
+      var fits = left <= keepCount;
+      gauge.classList.toggle('fits', fits && !cutBad);
+      state.textContent = cutBad ? 'Something needed is gone' : fits ? 'Under a page' : 'Over a page';
+      api.score(cutOk, cutNeeded, 'extra lines cut', cutBad > 0);
+      if (cutOk === cutNeeded && !cutBad) btns.forEach(function (b) { b.setAttribute('aria-disabled', 'true'); });
+    }
+    wrap.appendChild(gauge); wrap.appendChild(doc);
+    body.appendChild(wrap);
+    update();
+  });
+
+  /* ---------- type 4: put steps in order ---------- */
+  Training.register('order', function (body, c, api) {
+    var nextIdx = 0, total = c.steps.length;
+    var grid = el('div', 'training-order');
+    var poolBox = el('div', 'training-order-pool');
+    poolBox.appendChild(el('b', 'training-order-h', 'Steps to place'));
+    var pool = el('div', 'training-order-btns');
+    poolBox.appendChild(pool);
+    var outBox = el('div', 'training-order-out');
+    outBox.appendChild(el('b', 'training-order-h', 'Your order'));
+    var out = el('ol', 'training-order-list');
+    for (var k = 0; k < total; k++) out.appendChild(el('li', 'training-slot', '<span class="training-slot-n">' + (k + 1) + '</span><span class="training-slot-t">Empty</span>'));
+    outBox.appendChild(out);
+    c.shuffle.forEach(function (si) {
+      var s = c.steps[si];
+      var b = btn('training-step-btn', '<span class="pb-chip ' + s.who + '">' + s.whoLabel + '</span> ' + s.text);
+      b.addEventListener('click', function () {
+        if (si === nextIdx) {
+          var slot = out.children[nextIdx];
+          slot.classList.add('filled');
+          slot.innerHTML = '<span class="training-slot-n">' + (nextIdx + 1) + '</span><span class="training-slot-t"><span class="pb-chip ' + s.who + '">' + s.whoLabel + '</span> ' + s.text + '</span>';
+          var sib = b.nextElementSibling || b.previousElementSibling;
+          b.remove();
+          nextIdx++;
+          api.say(true, 'Step ' + nextIdx + ': ' + s.why);
+          api.score(nextIdx, total, 'steps placed');
+          if (sib) sib.focus();
+        } else {
+          api.bump(b, 'shake');
+          api.say(false, 'That is not step ' + (nextIdx + 1) + '. ' + s.why);
+          b.focus();
+        }
+      });
+      pool.appendChild(b);
+    });
+    api.arrowGroup(pool);
+    grid.appendChild(poolBox); grid.appendChild(outBox);
+    body.appendChild(grid);
+    api.score(0, total, 'steps placed');
+  });
+
+  /* ---------- type 5: tag each step human, agent, or gate ---------- */
+  Training.register('tag', function (body, c, api) {
+    var right = 0, total = c.rows.length;
+    var tbl = el('div', 'training-tag');
+    c.rows.forEach(function (r) {
+      var row = el('div', 'training-tag-row');
+      row.appendChild(el('p', 'training-tag-txt', r.text));
+      var grp = el('div', 'training-tag-opts'); grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', 'Who or what does this?');
+      c.tags.forEach(function (t) {
+        var b = btn('training-tag-btn ' + t.id, t.label);
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () {
+          if (row.classList.contains('fixed')) return;
+          if (t.id === r.tag) {
+            right++;
+            row.classList.add('fixed', 'is-' + t.id);
+            [].forEach.call(grp.children, function (x) { x.setAttribute('aria-disabled', 'true'); });
+            b.setAttribute('aria-pressed', 'true');
+            api.say(true, r.why, row);
+            api.score(right, total, 'tagged');
+          } else {
+            b.classList.add('wrong');
+            api.bump(b, 'shake');
+            api.say(false, r.why, row);
+          }
+        });
+        grp.appendChild(b);
+      });
+      api.arrowGroup(grp);
+      row.appendChild(grp);
+      tbl.appendChild(row);
+    });
+    body.appendChild(tbl);
+    api.score(0, total, 'tagged');
+  });
+
+  /* ---------- type 6: read a metric against sigma bands ---------- */
+  function chart(readings, note) {
+    var W = 300, H = 132, top = 8, bot = 16, lo = -1.5, hi = 4;
+    function y(v) { v = Math.max(lo, Math.min(hi, v)); return top + (hi - v) * (H - top - bot) / (hi - lo); }
+    var step = (W - 46) / (readings.length - 1);
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="training-chart" role="img" aria-label="' + note + '">';
+    s += '<rect x="0" y="' + y(4) + '" width="' + (W - 34) + '" height="' + (y(3) - y(4)) + '" class="b3"/>';
+    s += '<rect x="0" y="' + y(3) + '" width="' + (W - 34) + '" height="' + (y(2) - y(3)) + '" class="b2"/>';
+    s += '<rect x="0" y="' + y(2) + '" width="' + (W - 34) + '" height="' + (y(1) - y(2)) + '" class="b1"/>';
+    [[0, 'mean'], [1, '1σ'], [2, '2σ'], [3, '3σ']].forEach(function (b) {
+      s += '<line x1="0" x2="' + (W - 34) + '" y1="' + y(b[0]) + '" y2="' + y(b[0]) + '" class="' + (b[0] ? 'ln' : 'mn') + '"/>';
+      s += '<text x="' + (W - 30) + '" y="' + (y(b[0]) + 4) + '">' + b[1] + '</text>';
+    });
+    var pts = readings.map(function (v, i) { return [8 + i * step, y(v)]; });
+    s += '<polyline class="pl" points="' + pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>';
+    pts.forEach(function (p, i) {
+      var last = i === pts.length - 1;
+      s += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + (last ? 5.5 : 3.2) + '" class="' + (last ? 'pt last' : 'pt') + '"/>';
+    });
+    if (readings[readings.length - 1] > hi) s += '<text x="' + (pts[pts.length - 1][0] - 12) + '" y="' + (top + 14) + '" class="off" text-anchor="end">off the chart</text>';
+    s += '<text x="8" y="' + (H - 3) + '" class="ax">older</text><text x="' + (W - 38) + '" y="' + (H - 3) + '" class="ax" text-anchor="end">newest</text>';
+    return s + '</svg>';
+  }
+  Training.register('bands', function (body, c, api) {
+    var right = 0, total = c.cases.length;
+    var grid = el('div', 'training-bands');
+    c.cases.forEach(function (cs, n) {
+      var card = el('div', 'training-band-card');
+      card.appendChild(el('b', 'training-band-h', 'Reading ' + (n + 1) + ': ' + cs.title));
+      card.appendChild(el('div', 'training-band-chart', chart(cs.readings, cs.alt)));
+      if (cs.note) card.appendChild(el('p', 'training-band-note', cs.note));
+      var grp = el('div', 'training-band-opts'); grp.setAttribute('role', 'group'); grp.setAttribute('aria-label', 'Response for reading ' + (n + 1));
+      c.responses.forEach(function (r) {
+        var b = btn('training-band-btn', '<b>' + r.label + '</b><small>' + r.sub + '</small>');
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () {
+          if (card.classList.contains('fixed')) return;
+          if (r.id === cs.answer) {
+            right++;
+            card.classList.add('fixed');
+            [].forEach.call(grp.children, function (x) { x.setAttribute('aria-disabled', 'true'); });
+            b.setAttribute('aria-pressed', 'true');
+            api.say(true, cs.why, card);
+            api.score(right, total, 'readings handled');
+          } else {
+            b.classList.add('wrong');
+            api.bump(b, 'shake');
+            api.say(false, cs.why, card);
+          }
+        });
+        grp.appendChild(b);
+      });
+      api.arrowGroup(grp);
+      card.appendChild(grp);
+      grid.appendChild(card);
+    });
+    body.appendChild(grid);
+    api.score(0, total, 'readings handled');
+  });
+
+  /* ---------- activity data ---------- */
+  var CONFIGS = {
+    shift: {
+      lesson: 1,
+      title: 'Sort the cards: traditional or AI-native?',
+      prompt: 'Pick a card, then pick a column. With the keyboard, press Left or Right on a card to place it.',
+      hint: 'Pick a card to start.',
+      wrap: 'Most teams sit somewhere between the two columns today.',
+      bins: [{ label: 'Traditional', chip: 'old', cls: 'old' }, { label: 'AI-native', chip: 'agent', cls: 'new' }],
+      items: [
+        { text: 'Requirements gathered by committee through workshops and sign-offs', bin: 0, why: 'This is the traditional Plan stage. In the AI-native way, Claude pulls pain points from the sources into intent.md.' },
+        { text: 'Continuous evals run through implementation', bin: 1, why: 'This is the AI-native Test stage. The traditional way puts QA gates at stage boundaries.' },
+        { text: 'Documentation written after development', bin: 0, why: 'This is the traditional Build stage. AI-native teams keep knowledge in versioned CLAUDE.md files and skills.' },
+        { text: 'Hooks enforce governance as the AI acts', bin: 1, why: 'This is the AI-native Deploy stage: hooks are approval gates that run every time.' },
+        { text: 'Humans review every line of every change', bin: 0, why: 'This is the traditional Deploy stage. AI-native review uses layers of agent review, with human review kept for regulated and critical code.' },
+        { text: 'Requirements and design done in one session with an agent, guided by skills', bin: 1, why: 'This is the AI-native Design stage. Traditionally analysts write the spec and designers parse it.' },
+        { text: 'Humans watch production for bugs', bin: 0, why: 'This is the traditional Maintain stage. AI-native agents monitor live deployments.' },
+        { text: 'A breached control band is written back as a new intent.md', bin: 1, why: 'This is the AI-native Maintain stage. It is how the loop restarts on its own.' }
+      ]
+    },
+    intent: {
+      lesson: 2,
+      title: 'Repair a vague intent.md',
+      prompt: 'This draft for an insurer is too vague. For each section, pick the stronger line.',
+      hint: 'Pick a line in any section.',
+      wrap: 'This is now ready for the product owner to review and commit.',
+      file: 'intent/claims-status.md',
+      meta: 'Author: J. Ortiz, claims operations &middot; Status: draft',
+      heading: 'Intent: claims status self-service',
+      sections: [
+        { name: 'Problem', answer: 1, options: ['Customers are unhappy with the portal.', 'Customers phone the contact center to ask where their claim is. Handlers spend about a third of call time on status-only queries.'],
+          why: 'A good problem says who is affected and what they cannot do today, in the originator’s own words.' },
+        { name: 'Proposed outcome', answer: 0, options: ['Customers see claim status, next step, and expected date in the portal.', 'A modern, best-in-class claims experience.'],
+          why: 'The outcome should describe what better looks like in concrete terms, so the spec and tests can check it.' },
+        { name: 'Affected users and systems', answer: 1, options: ['Everyone.', 'Claims handlers, the portal team, and the claims-core API.'],
+          why: 'Naming the people and systems tells design who to involve and what the change touches.' },
+        { name: 'Constraints', answer: 0, options: ['No new PII in the portal session. Existing authentication only.', 'Keep it secure.'],
+          why: 'Constraints must be specific enough to check. The spec later shows how each one is met.' },
+        { name: 'Open questions', answer: 1, options: ['None. Everything is clear.', 'Do third-party loss adjusters need access too?'],
+          why: 'Open questions are carried forward. In the course example this one becomes a flagged concern in spec.md, owned by security.' }
+      ]
+    },
+    claudemd: {
+      lesson: 3,
+      title: 'Trim a bloated CLAUDE.md',
+      prompt: 'This file is over a page. Cut the five lines that do not belong, and keep what a new joiner needs on day one.',
+      hint: 'Select a line to cut it.',
+      wrap: 'It now fits under a page, so no context is wasted at session start.',
+      file: 'CLAUDE.md',
+      lines: [
+        { group: 'Commands', keep: true, text: '<code>make test</code> runs unit tests. <code>make itest</code> runs integration tests (needs docker).', why: 'Keep it. Build, test, and lint commands are exactly what a new joiner needs on day one.' },
+        { group: 'Commands', keep: true, text: '<code>make lint</code> runs in CI. Fix lint before pushing.', why: 'Keep it. Commands belong in CLAUDE.md so Claude can check its own work.' },
+        { group: 'Commands', keep: false, text: 'Step-by-step plan for the claims status change: files, order of work, and tests.', why: 'Cut it. A plan for one change belongs in that change’s plan.md, made in plan mode.' },
+        { group: 'Conventions', keep: true, text: 'claims-api is Python 3.12 and FastAPI. The portal is TypeScript and React.', why: 'Keep it. These are conventions that matter in this repo.' },
+        { group: 'Conventions', keep: true, text: 'Every endpoint needs a test in claims-api/tests.', why: 'Keep it. It is a convention Claude must follow on every change.' },
+        { group: 'Conventions', keep: false, text: 'The full brand voice policy, pasted in from the wiki.', why: 'Cut it. A policy that must be applied consistently belongs in a skill, owned and signed off by its policy owner.' },
+        { group: 'Conventions', keep: false, text: 'A long story of how the team used to work before Claude.', why: 'Cut it. Claude reads the whole file every session, and stale content wastes context.' },
+        { group: 'Architecture', keep: true, text: 'Only claims-api talks to claims-core. It allows 50 requests per second: cache reads, never poll it.', why: 'Keep it. Architecture facts like this stop costly mistakes.' },
+        { group: 'Architecture', keep: false, text: 'Notes from an old debate about which web framework to pick.', why: 'Cut it. It is history, and a new joiner does not need it on day one.' },
+        { group: 'Things Claude gets wrong', keep: true, text: 'Do not log request or response bodies in claims-api. They can hold PII.', why: 'Keep it. In the course, an eval fails when a PR trims this exact line.' },
+        { group: 'Things Claude gets wrong', keep: true, text: 'Do not bump dependency versions. The platform team owns them.', why: 'Keep it. When Claude makes a mistake twice, the correction goes in this section.' },
+        { group: 'Things Claude gets wrong', keep: false, text: 'Releases to production need an approved change ticket. Please always check.', why: 'Cut it. A rule that must always hold needs something deterministic behind it, such as a hook. CLAUDE.md is advice Claude reads.' }
+      ]
+    },
+    bugfix: {
+      lesson: 4,
+      title: 'Put a bug fix in order',
+      prompt: 'A customer reports a bug in the claim status endpoint. Pick the steps in the order they happen, using a protected feedback loop.',
+      hint: 'Pick the first step.',
+      wrap: 'A test that existed before the fix, and that the agent could not rewrite, is proof the bug is gone.',
+      steps: [
+        { who: 'human', whoLabel: 'Engineer', text: 'Reproduce the bug as a test.', why: 'For a bug, the failing test comes first.' },
+        { who: 'human', whoLabel: 'Engineer', text: 'Run the test and confirm it fails for the expected reason.', why: 'A test that fails for the wrong reason proves nothing, so check the reason before going on.' },
+        { who: 'human', whoLabel: 'Engineer', text: 'Commit the failing test.', why: 'Committing it before the fix records that the test existed first.' },
+        { who: 'agent', whoLabel: 'Claude', text: 'Make the test pass without editing it, while a hook blocks edits to test files.', why: 'Claude runs make test and fixes the code until it is green. The hook protects the loop, so the agent cannot weaken its own check.' },
+        { who: 'agent', whoLabel: 'Claude', text: 'Paste the test output before reporting the task done.', why: 'Verification is part of done, so the evidence comes with the result.' },
+        { who: 'human', whoLabel: 'Code owner', text: 'Review the PR with the test output attached.', why: 'The code owner approves last. With the mechanical evidence attached, they can focus on intent and risk.' }
+      ],
+      shuffle: [4, 2, 0, 5, 3, 1]
+    },
+    deploy: {
+      lesson: 5,
+      title: 'Who does it: a person, Claude, or a gate?',
+      prompt: 'Tag each step on the way from PR to production. Use the chip colors from the legend.',
+      hint: 'Pick a tag for any step.',
+      wrap: 'Claude does the work, gates enforce the rules every time, and people approve.',
+      tags: [{ id: 'human', label: 'Person' }, { id: 'agent', label: 'Claude' }, { id: 'gate', label: 'Gate' }],
+      rows: [
+        { text: 'Reviews the PR in three passes from REVIEW.md and ranks each finding by severity.', tag: 'agent', why: 'Claude runs the review passes. Its findings inform the approval but do not approve or block on their own.' },
+        { text: 'Approves the PR so it can merge.', tag: 'human', why: 'A code owner approves through branch protection. The agent that wrote the code has no way to approve it.' },
+        { text: 'Addresses a review comment tagged @claude and pushes the fix.', tag: 'agent', why: 'When someone tags @claude on a comment, Claude makes the fix and pushes it.' },
+        { text: 'Triages a failed build and writes a three-line summary for the PR thread.', tag: 'agent', why: 'This is a read-only judgment step that Claude runs in the pipeline.' },
+        { text: 'Checks for an approved change ticket before any production release, and blocks without one.', tag: 'gate', why: 'This is the release hook. It runs before Claude acts and enforces the rule every time, for everyone.' },
+        { text: 'Authorizes the production release by approving the change ticket.', tag: 'human', why: 'The release manager authorizes production. The agent can prepare the release and cannot pass this gate.' }
+      ]
+    },
+    bands: {
+      lesson: 6,
+      title: 'Read the metric, pick the response',
+      prompt: 'Each chart shows recent hourly readings of a post-deploy 5xx rate against its bands. The big dot is the newest reading. Pick the response bands.yaml allows.',
+      hint: 'Pick a response for any reading.',
+      wrap: 'Detection stays deterministic, Claude acts only through gated routes, and its findings restart the loop as intent.md.',
+      responses: [
+        { id: 'log', label: 'Log only', sub: '1σ tier' },
+        { id: 'diagnose', label: 'Diagnose', sub: '2σ: Claude, read-only' },
+        { id: 'act', label: 'Act through a gate', sub: '3σ: PR or runbook' }
+      ],
+      cases: [
+        { title: 'one blip', readings: [0.1, -0.4, 0.3, -0.2, 0.5, 0.0, -0.3, 0.2, -0.1, 1.3], answer: 'log', alt: 'Readings near the mean, newest just above 1 sigma.',
+          why: 'One reading just above 1σ happens about 4 times a day by chance alone, so this tier only logs.' },
+        { title: 'a spike', readings: [0.2, -0.3, 0.4, 0.0, -0.5, 0.3, 0.1, -0.2, 0.4, 2.5], answer: 'diagnose', alt: 'Readings near the mean, newest between 2 and 3 sigma.',
+          why: 'Above 2σ and below 3σ, Claude is invoked read-only to diagnose. It cannot change anything yet.' },
+        { title: 'slow drift', readings: [0.0, 0.3, -0.2, 0.4, 1.4, 1.6, 0.6, 1.5, 1.7, 1.4], answer: 'diagnose', alt: 'Four of the last five readings above 1 sigma, none above 2 sigma.',
+          why: 'Four of the last five readings sit above 1σ. That drift rule counts as 2σ, so Claude diagnoses read-only.' },
+        { title: 'right after a release', readings: [0.1, -0.2, 0.3, 0.0, -0.3, 0.2, 0.1, -0.1, 0.2, 9], answer: 'act', note: 'A release went out minutes before this reading.', alt: 'Newest reading far above 3 sigma, minutes after a release.',
+          why: 'Above 3σ with a release in the window, Claude may run the pre-approved rollback runbook, then write an intent.md for triage.' }
+      ]
+    }
+  };
+
+  /* ---------- boot ---------- */
+  function boot() {
+    [].forEach.call(document.querySelectorAll('[data-training-activity]'), function (mount) {
+      var cfg = CONFIGS[mount.getAttribute('data-training-config')];
+      if (!cfg) return;
+      mount.appendChild(Training.create(mount.getAttribute('data-training-activity'), cfg));
+    });
+    paintProgress();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+/* Training exam: 20 questions, 15 minutes, built from one data bank through a small type registry. */
+(function () {
+  var section = document.getElementById('training-exam');
+  if (!section) return;
+  var card = section.querySelector('[data-exam-root]');
+  var BP = '{{BP}}';
+  var PASS = 16;
+  var LIMIT = 900;
+  try {
+    var qs = /[?&]examSeconds=(\d+)/.exec(location.search);
+    if (qs) LIMIT = Math.max(3, parseInt(qs[1], 10));
+  } catch (e) { /* keep the default */ }
+  var STORE = 'pb-training-exam-last';
+
+  /* ---------- Content ---------- */
+  /* Groups for the breakdown. lesson = anchor on this page, slug = stage page. */
+  var GROUPS = {
+    loop: { label: 'The shift and the loop', lesson: 1, slug: '', page: 'Overview' },
+    plan: { label: 'Plan', lesson: 2, slug: 'plan', page: 'Stage 1: Plan' },
+    design: { label: 'Design', lesson: 3, slug: 'design', page: 'Stage 2: Design' },
+    build: { label: 'Build', lesson: 3, slug: 'build', page: 'Stage 3: Build' },
+    test: { label: 'Test', lesson: 4, slug: 'test', page: 'Stage 4: Test' },
+    deploy: { label: 'Deploy', lesson: 5, slug: 'deploy', page: 'Stage 5: Deploy' },
+    maintain: { label: 'Maintain', lesson: 6, slug: 'maintain', page: 'Stage 6: Maintain' }
+  };
+  var GROUP_ORDER = ['loop', 'plan', 'design', 'build', 'test', 'deploy', 'maintain'];
+
+  /* {name} renders as a committed artifact. */
+  var BANK = [
+    { id: 'q1', group: 'loop', type: 'single',
+      prompt: 'At a bank, agents now write most of each diff. Releases still take as long as before. Where does the course say the bottleneck has moved?',
+      options: [
+        { id: 'a', text: 'To plan, review and test, and deploy, which still run at human speed' },
+        { id: 'b', text: 'Into build, because agent code has to be rewritten by hand' },
+        { id: 'c', text: 'Into maintain, because production now fails more often' },
+        { id: 'd', text: 'Into model speed, so the fix is a faster model' }
+      ],
+      answer: 'a',
+      why: 'When build runs fast, the bottleneck moves to the stages on either side of it. Plan, review and test, and deploy still run at human speed.' },
+
+    { id: 'q2', group: 'loop', type: 'match',
+      prompt: 'In the AI-native loop, each accepted artifact starts the next step. Match each trigger to what it starts.',
+      items: [
+        { id: 'i1', text: 'The product owner accepts {intent.md}', answer: 'c1' },
+        { id: 'i2', text: 'A {spec.md} is approved', answer: 'c2' },
+        { id: 'i3', text: 'A pull request is merged', answer: 'c3' },
+        { id: 'i4', text: 'A control band is breached in production', answer: 'c4' }
+      ],
+      choices: [
+        { id: 'c1', text: 'The requirements and design pass' },
+        { id: 'c2', text: 'Plan mode' },
+        { id: 'c3', text: 'The pipeline' },
+        { id: 'c4', text: 'A new intent.md' }
+      ],
+      why: 'Accepted intent starts design, an approved spec starts plan mode, a merged PR starts the pipeline, and a breached band writes the next intent.md.' },
+
+    { id: 'q3', group: 'loop', type: 'multi', lesson: 6, slug: 'roadmap', page: 'Your transition roadmap',
+      prompt: 'A team wants a first play that needs nothing else in place. Which of these have no prerequisites in the course\'s dependency graph? Select all that apply.',
+      options: [
+        { id: 'a', text: 'The CLAUDE.md' },
+        { id: 'b', text: 'Hooks as approval gates' },
+        { id: 'c', text: 'Give Claude a feedback loop' },
+        { id: 'd', text: 'Continuous evals in CI' },
+        { id: 'e', text: 'AI in the PR review loop' },
+        { id: 'f', text: 'CI/CD integration and deployment' }
+      ],
+      answer: ['a', 'b', 'c'],
+      why: 'Six plays have no prerequisites: capture intent, plan mode, CLAUDE.md, skills, the feedback loop, and hooks. Evals need CLAUDE.md and the feedback loop, PR review needs evals and subagents, and CI/CD needs PR review and hooks.' },
+
+    { id: 'q4', group: 'plan', type: 'single',
+      prompt: 'A claims handler brainstorms with Claude in claude.ai and gets a draft {intent.md}. What must happen before it is committed?',
+      options: [
+        { id: 'a', text: 'The product owner reviews and corrects it' },
+        { id: 'b', text: 'The team estimates it in story points at a refinement meeting' },
+        { id: 'c', text: 'Claude turns it into a {spec.md} first' },
+        { id: 'd', text: 'It passes the eval suite in CI' }
+      ],
+      answer: 'a',
+      why: 'Whatever route the intent arrives by, the product owner reviews and corrects the agent-written intent.md before it is committed.' },
+
+    { id: 'q5', group: 'plan', type: 'order',
+      prompt: 'Put the steps for capturing intent in order, first to last.',
+      items: [
+        { id: 's1', text: 'The originator describes the problem in their own words' },
+        { id: 's2', text: 'Brainstorm with Claude until the idea is concrete' },
+        { id: 's3', text: 'Claude writes {intent.md} from the org\'s template' },
+        { id: 's4', text: 'The originator corrects any misunderstanding' },
+        { id: 's5', text: 'Commit {intent.md} to the shared intent home' }
+      ],
+      why: 'Describe, brainstorm, draft from the template, correct, and then commit. The commit records author and timestamp, and the product owner picks it up.' },
+
+    { id: 'q6', group: 'plan', type: 'single',
+      prompt: 'A product manager has never used Git. How does their {intent.md} get into the version-controlled intent home?',
+      options: [
+        { id: 'a', text: 'A connector, such as GitHub, lets Claude commit the Markdown for them from claude.ai or Cowork' },
+        { id: 'b', text: 'They take a Git course before they can write intent' },
+        { id: 'c', text: 'An engineer retypes it as a Jira ticket' },
+        { id: 'd', text: 'They email it to the product owner, who keeps it outside version control' }
+      ],
+      answer: 'a',
+      why: 'Contributors without Git experience do not need Git. A connector lets Claude commit the file on their behalf.' },
+
+    { id: 'q7', group: 'design', type: 'single',
+      prompt: 'Claude\'s {spec.md} flags a concern. The portal-ux skill says every status shows a date, and the brand-voice skill says never state a payment date as a commitment. What should happen next?',
+      options: [
+        { id: 'a', text: 'The product owner resolves it with the named policy owner before engineering sees the spec' },
+        { id: 'b', text: 'Engineering picks one of the two rules during build' },
+        { id: 'c', text: 'Delete one of the two skills so the conflict goes away' },
+        { id: 'd', text: 'Ship it and let PR review catch the conflict' }
+      ],
+      answer: 'a',
+      why: 'Flagged concerns come first, because they are what an analyst would have escalated. The product owner resolves each one with its policy owner before engineering sees the spec.' },
+
+    { id: 'q8', group: 'design', type: 'single',
+      prompt: 'Who does what with {spec.md}?',
+      options: [
+        { id: 'a', text: 'Claude drafts it with the org\'s skills applied. The product owner reviews it and decides if it goes to build.' },
+        { id: 'b', text: 'The product owner writes it. Claude approves it.' },
+        { id: 'c', text: 'An analyst writes it. A designer turns it into a design.' },
+        { id: 'd', text: 'Claude drafts it and approves it once the skills pass.' }
+      ],
+      answer: 'a',
+      why: 'The product owner reviews the spec and does not write it. A person always makes the call to build, and consults a tech lead for higher-risk items.' },
+
+    { id: 'q9', group: 'build', type: 'single',
+      prompt: 'An engineer starts a Claude Code session in plan mode with an approved {spec.md}. Until the engineer accepts the plan, what can Claude do?',
+      options: [
+        { id: 'a', text: 'Read the codebase only. It cannot edit files.' },
+        { id: 'b', text: 'Edit files, as long as it explains each change' },
+        { id: 'c', text: 'Edit test files only' },
+        { id: 'd', text: 'Nothing, until the engineer writes the plan by hand' }
+      ],
+      answer: 'a',
+      why: 'In plan mode Claude can read the codebase and cannot edit files until the engineer accepts the plan. Design review happens while changing course is still a matter of editing a document.' },
+
+    { id: 'q10', group: 'build', type: 'match',
+      prompt: 'Match each piece of knowledge to where it belongs.',
+      items: [
+        { id: 'i1', text: 'The build, test, and lint commands a new joiner needs', answer: 'c1' },
+        { id: 'i2', text: 'A security standard the whole org should apply the same way', answer: 'c2' },
+        { id: 'i3', text: 'A policy that must hold without exception at every edit', answer: 'c3' },
+        { id: 'i4', text: 'The files, order of work, and tests for one change', answer: 'c4' }
+      ],
+      choices: [
+        { id: 'c1', text: 'CLAUDE.md' },
+        { id: 'c2', text: 'A skill' },
+        { id: 'c3', text: 'A hook' },
+        { id: 'c4', text: 'plan.md' }
+      ],
+      why: 'CLAUDE.md holds what a new joiner needs. A skill applies institutional knowledge consistently, and it is advisory. A hook is deterministic. plan.md records how one change will be made.' },
+
+    { id: 'q11', group: 'build', type: 'multi',
+      prompt: 'Claude keeps repeating the same mistakes in a repo. Which practices does the course recommend for {CLAUDE.md}? Select all that apply.',
+      options: [
+        { id: 'a', text: 'Check it into Git at the repo root' },
+        { id: 'b', text: 'Keep it under a page' },
+        { id: 'c', text: 'When Claude makes a mistake twice, add the correction' },
+        { id: 'd', text: 'Paste in the whole team wiki so nothing is missed' },
+        { id: 'e', text: 'Keep a private copy per engineer so each person can tune it' }
+      ],
+      answer: ['a', 'b', 'c'],
+      why: 'The team shares one reviewed file at the repo root. It stays under a page because Claude reads all of it at the start of every session. A correction goes in after the second mistake.' },
+
+    { id: 'q12', group: 'test', type: 'single',
+      prompt: 'Claude is asked to fix a bug in the claim status endpoint. What does the course say to do first?',
+      options: [
+        { id: 'a', text: 'Write a failing test that reproduces the bug, commit it, and ask Claude to make it pass without editing the test' },
+        { id: 'b', text: 'Let Claude fix the bug, then write a test that passes' },
+        { id: 'c', text: 'Let Claude update the existing tests to match the new behavior' },
+        { id: 'd', text: 'Skip the tests and rely on PR review' }
+      ],
+      answer: 'a',
+      why: 'A test that existed before the fix, and that the agent could not rewrite, is proof the bug is gone. A hook can block edits to test files during the fix.' },
+
+    { id: 'q13', group: 'test', type: 'single',
+      prompt: 'A pull request trims {CLAUDE.md} and drops the line about never logging request and response bodies. All unit tests still pass. What should catch this before merge?',
+      options: [
+        { id: 'a', text: 'The eval suite, which runs on any change to CLAUDE.md, skills, or hooks' },
+        { id: 'b', text: 'The production release gate hook' },
+        { id: 'c', text: 'Plan mode, at the start of the next session' },
+        { id: 'd', text: 'Nothing, since CLAUDE.md is only documentation' }
+      ],
+      answer: 'a',
+      why: 'Agent configuration deserves the same regression testing as code. In the course\'s example, the status-no-pii-in-logs eval fails and the line goes back in before merge.' },
+
+    { id: 'q14', group: 'test', type: 'multi',
+      prompt: 'A platform engineer sets up continuous evals in CI. Which steps match the course? Select all that apply.',
+      options: [
+        { id: 'a', text: 'Collect 20 to 50 real tasks from recent work, each with its accepted outcome' },
+        { id: 'b', text: 'Run the suite on a schedule and on any change to CLAUDE.md, skills, or hooks' },
+        { id: 'c', text: 'Add an eval for each production incident and keep it as a regression test' },
+        { id: 'd', text: 'Add --bare to the claude -p call so runs go faster' },
+        { id: 'e', text: 'Let the agent edit the checks when a case no longer fits' }
+      ],
+      answer: ['a', 'b', 'c'],
+      why: 'The --bare flag skips CLAUDE.md, skills, and hooks, which are the things under test. The check script fails any run that changes files outside the allowed paths, so the agent cannot rewrite its checks.' },
+
+    { id: 'q15', group: 'deploy', type: 'single',
+      prompt: 'Claude\'s review check run lists two Important findings on a pull request. What decides whether it merges?',
+      options: [
+        { id: 'a', text: 'A code owner\'s approval through branch protection, informed by the findings' },
+        { id: 'b', text: 'The findings alone: any Important finding blocks the merge' },
+        { id: 'c', text: 'Claude, which wrote the code, approves once it fixes the findings' },
+        { id: 'd', text: 'Nothing: it merges because Claude already reviewed it' }
+      ],
+      answer: 'a',
+      why: 'Findings do not approve or block a PR on their own. The agent that wrote the code has no way to approve it, so a person approves through branch protection.' },
+
+    { id: 'q16', group: 'deploy', type: 'match',
+      prompt: 'The insurer releases through a hook that decides per environment. Match each environment to who approves a release.',
+      items: [
+        { id: 'i1', text: 'Dev', answer: 'c1' },
+        { id: 'i2', text: 'Staging', answer: 'c2' },
+        { id: 'i3', text: 'Production', answer: 'c3' }
+      ],
+      choices: [
+        { id: 'c1', text: 'Nobody, the hook allows it' },
+        { id: 'c2', text: 'The engineer, or the approved merge when the pipeline runs on main' },
+        { id: 'c3', text: 'The release manager, through an approved change ticket' }
+      ],
+      why: 'Autonomy is tiered by environment. Dev deploys freely, staging asks or trusts the approved merge, and production is denied unless an approved change ticket exists.' },
+
+    { id: 'q17', group: 'deploy', type: 'order',
+      prompt: 'A platform engineer brings Claude into the CI/CD pipeline. Put the rollout in the order the course gives, first to last.',
+      items: [
+        { id: 's1', text: 'Read-only judgment steps, such as triaging a failed build' },
+        { id: 's2', text: 'Write steps behind existing gates, such as fixing lint through a PR' },
+        { id: 's3', text: 'Deployment exposed as MCP tools scoped per environment' },
+        { id: 's4', text: 'Autonomy tiered by environment, with production authorized by the release manager' }
+      ],
+      why: 'Start read-only, add writes behind the gates that already exist, expose deployment through MCP, and then tier autonomy. The gates must exist before automation speeds anything through them.' },
+
+    { id: 'q18', group: 'maintain', type: 'single',
+      prompt: 'The hourly detection script puts the CI test failure rate in the 2σ tier. Under the course\'s bands.yaml, what happens?',
+      options: [
+        { id: 'a', text: 'Claude is invoked read-only to diagnose' },
+        { id: 'b', text: 'The reading is only logged' },
+        { id: 'c', text: 'Claude rolls back the latest deploy' },
+        { id: 'd', text: 'Claude pushes a fix straight to main' }
+      ],
+      answer: 'a',
+      why: '1σ only logs. 2σ invokes Claude read-only to diagnose. 3σ lets Claude act, and only by opening a PR or triggering a pre-approved runbook.' },
+
+    { id: 'q19', group: 'maintain', type: 'single',
+      prompt: 'Minutes after a release, the 5xx rate on the claim status endpoint breaches 3σ. What does the monitoring agent do?',
+      options: [
+        { id: 'a', text: 'Runs the pre-approved rollback runbook, then writes its diagnosis as an {intent.md}' },
+        { id: 'b', text: 'Waits for the on-call engineer to start an investigation' },
+        { id: 'c', text: 'Pushes a fix straight to main to save time' },
+        { id: 'd', text: 'Widens the band in bands.yaml so the alert clears' }
+      ],
+      answer: 'a',
+      why: 'At 3σ with a release in the window, the agent triggers the existing rollback. Its findings become an intent.md that goes back through the stages, and people triage it.' },
+
+    { id: 'q20', group: 'maintain', type: 'multi',
+      prompt: 'Which statements about the Stage 6 detection script are true? Select all that apply.',
+      options: [
+        { id: 'a', text: 'It is deterministic, with no model involved' },
+        { id: 'b', text: 'It is version controlled and unit tested' },
+        { id: 'c', text: 'Its drift rules catch slow changes that never cross 3σ' },
+        { id: 'd', text: 'Claude computes the baseline and decides the tier' },
+        { id: 'e', text: 'Every reading above 1σ starts a Claude session' }
+      ],
+      answer: ['a', 'b', 'c'],
+      why: 'Detection stays deterministic. It uses a 30-day rolling baseline and rules such as Western Electric to catch drift. Readings land above 1σ about four times a day by chance, so 1σ only logs.' }
+  ];
+
+  /* ---------- Helpers ---------- */
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(s) { return esc(s).replace(/\{([^{}]+)\}/g, '<span class="pb-file">$1</span>'); }
+  function plain(s) { return String(s).replace(/\{([^{}]+)\}/g, '$1'); }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function ids(list) { return list.map(function (x) { return x.id; }); }
+  function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+  function sameSet(a, b) { return a.length === b.length && a.every(function (x) { return b.indexOf(x) !== -1; }); }
+  function clock(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), r = s % 60; return m + ':' + (r < 10 ? '0' : '') + r; }
+  function bulletList(items) { return '<ul class="training-exam-ans">' + items.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>'; }
+  var NONE = '<em>No answer</em>';
+
+  /* ---------- Registry ---------- */
+  var types = {};
+  var Exam = {
+    register: function (type, def) { types[type] = def; },
+    bank: BANK
+  };
+  window.PBExam = Exam;
+
+  /* Each type: label, prepare(q) -> per-attempt view, render(q, view, value, host),
+     read(q, view, host) -> value, answered(q, value), grade(q, value), review(q, value) -> { yours, right } */
+
+  function choiceType(multi) {
+    return {
+      label: multi ? 'Select all that apply' : 'Pick one',
+      prepare: function (q) { return { order: shuffle(ids(q.options)) }; },
+      render: function (q, view, value, host) {
+        var name = 'training-exam-' + q.id;
+        var html = '<fieldset class="training-exam-choices"><legend class="training-exam-sr">' + (multi ? 'Select all that apply' : 'Pick one answer') + '</legend>';
+        view.order.forEach(function (id) {
+          var o = byId(q.options, id);
+          var on = multi ? (value || []).indexOf(id) !== -1 : value === id;
+          html += '<label class="training-exam-opt"><input type="' + (multi ? 'checkbox' : 'radio') + '" name="' + name + '" value="' + id + '"' + (on ? ' checked' : '') + '><span>' + fmt(o.text) + '</span></label>';
+        });
+        host.innerHTML = html + '</fieldset>';
+      },
+      read: function (q, view, host) {
+        var picked = [].slice.call(host.querySelectorAll('input:checked')).map(function (i) { return i.value; });
+        if (multi) return picked.length ? picked : undefined;
+        return picked[0];
+      },
+      answered: function (q, value) { return multi ? !!(value && value.length) : !!value; },
+      grade: function (q, value) { return multi ? !!value && sameSet(value, q.answer) : value === q.answer; },
+      review: function (q, value) {
+        function list(sel) { return sel.map(function (id) { return fmt(byId(q.options, id).text); }); }
+        var right = multi ? q.answer : [q.answer];
+        var mine = multi ? (value || []) : (value ? [value] : []);
+        return { yours: mine.length ? bulletList(list(mine)) : NONE, right: bulletList(list(right)) };
+      }
+    };
+  }
+  Exam.register('single', choiceType(false));
+  Exam.register('multi', choiceType(true));
+
+  Exam.register('order', {
+    label: 'Put in order',
+    prepare: function (q) {
+      var right = ids(q.items), o;
+      do { o = shuffle(right); } while (o.join() === right.join());
+      return { order: o };
+    },
+    render: function (q, view, value, host) {
+      var order = value || view.order;
+      var html = '<p class="training-exam-hint">Use Move up and Move down to reorder. Your order counts once you move an item or press Keep this order.</p><ol class="training-exam-order">';
+      order.forEach(function (id) {
+        var it = byId(q.items, id), t = esc(plain(it.text));
+        html += '<li data-id="' + id + '"><span class="training-exam-pos" aria-hidden="true"></span><span class="training-exam-otext">' + fmt(it.text) + '</span>' +
+          '<span class="training-exam-moves"><button type="button" class="training-exam-move" data-move="-1" aria-label="Move up: ' + t + '">&uarr;</button>' +
+          '<button type="button" class="training-exam-move" data-move="1" aria-label="Move down: ' + t + '">&darr;</button></span></li>';
+      });
+      html += '</ol><button type="button" class="pb-btn ghost training-exam-keep" data-keep>' + (value ? 'Order saved' : 'Keep this order') + '</button>' +
+        '<p class="training-exam-sr" aria-live="polite" data-order-live></p>';
+      host.innerHTML = html;
+      var ol = host.querySelector('ol');
+      function sync() {
+        var lis = [].slice.call(ol.children);
+        lis.forEach(function (li, i) {
+          li.querySelector('.training-exam-pos').textContent = i + 1;
+          li.querySelector('[data-move="-1"]').disabled = i === 0;
+          li.querySelector('[data-move="1"]').disabled = i === lis.length - 1;
+        });
+      }
+      function changed() {
+        host.dataset.set = '1';
+        host.querySelector('[data-keep]').textContent = 'Order saved';
+        host.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      sync();
+      if (value) host.dataset.set = '1'; else delete host.dataset.set;
+      host.onclick = function (e) {
+        var b = e.target.closest('button');
+        if (!b) return;
+        if (b.hasAttribute('data-keep')) { changed(); return; }
+        var li = b.closest('li'), dir = +b.getAttribute('data-move');
+        var sib = dir < 0 ? li.previousElementSibling : li.nextElementSibling;
+        if (!sib) return;
+        if (dir < 0) ol.insertBefore(li, sib); else ol.insertBefore(sib, li);
+        sync();
+        var pos = [].indexOf.call(ol.children, li) + 1;
+        host.querySelector('[data-order-live]').textContent = plain(byId(q.items, li.getAttribute('data-id')).text) + ': position ' + pos + ' of ' + ol.children.length + '.';
+        (b.disabled ? li.querySelector('[data-move="' + (-dir) + '"]') : b).focus();
+        li.classList.remove('training-exam-moved'); void li.offsetWidth; li.classList.add('training-exam-moved');
+        changed();
+      };
+    },
+    read: function (q, view, host) {
+      if (!host.dataset.set) return undefined;
+      return [].slice.call(host.querySelectorAll('ol > li')).map(function (li) { return li.getAttribute('data-id'); });
+    },
+    answered: function (q, value) { return !!value; },
+    grade: function (q, value) { return !!value && value.join() === ids(q.items).join(); },
+    review: function (q, value) {
+      function list(order) { return '<ol class="training-exam-ans">' + order.map(function (id) { return '<li>' + fmt(byId(q.items, id).text) + '</li>'; }).join('') + '</ol>'; }
+      return { yours: value ? list(value) : NONE, right: list(ids(q.items)) };
+    }
+  });
+
+  Exam.register('match', {
+    label: 'Match',
+    prepare: function (q) { return { rows: shuffle(ids(q.items)), choices: shuffle(ids(q.choices)) }; },
+    render: function (q, view, value, host) {
+      value = value || {};
+      var html = '<div class="training-exam-match">';
+      view.rows.forEach(function (id, n) {
+        var it = byId(q.items, id), sid = 'training-exam-' + q.id + '-' + id;
+        html += '<div class="training-exam-mrow"><label for="' + sid + '">' + fmt(it.text) + '</label><select id="' + sid + '" data-item="' + id + '"><option value="">Choose one</option>';
+        view.choices.forEach(function (cid) {
+          html += '<option value="' + cid + '"' + (value[id] === cid ? ' selected' : '') + '>' + esc(plain(byId(q.choices, cid).text)) + '</option>';
+        });
+        html += '</select></div>';
+      });
+      host.innerHTML = html + '</div>';
+    },
+    read: function (q, view, host) {
+      var v = {}, any = false;
+      [].forEach.call(host.querySelectorAll('select'), function (s) { if (s.value) { v[s.getAttribute('data-item')] = s.value; any = true; } });
+      return any ? v : undefined;
+    },
+    answered: function (q, value) { return !!value && q.items.every(function (it) { return value[it.id]; }); },
+    grade: function (q, value) { return !!value && q.items.every(function (it) { return value[it.id] === it.answer; }); },
+    review: function (q, value) {
+      function list(get) {
+        return bulletList(q.items.map(function (it) { var c = get(it); return fmt(it.text) + ': <b>' + (c ? esc(plain(byId(q.choices, c).text)) : 'no answer') + '</b>'; }));
+      }
+      return { yours: value ? list(function (it) { return value[it.id]; }) : NONE, right: list(function (it) { return it.answer; }) };
+    }
+  });
+
+  /* ---------- One code path for navigation, timer, grading, and review ---------- */
+  var screens = {};
+  [].forEach.call(card.querySelectorAll('[data-exam-screen]'), function (s) { screens[s.getAttribute('data-exam-screen')] = s; });
+  var live = card.querySelector('[data-exam-live]');
+  var st = null, ticker = null;
+
+  function say(msg) { live.textContent = ''; setTimeout(function () { live.textContent = msg; }, 50); }
+  function show(name) { for (var k in screens) screens[k].hidden = k !== name; }
+  function def(q) { return types[q.type]; }
+  function isAnswered(q) { return def(q).answered(q, st.answers[q.id]); }
+  function lessonOf(q) { return q.lesson || GROUPS[q.group].lesson; }
+  function pageOf(q) { var g = GROUPS[q.group]; return { slug: q.slug != null ? q.slug : g.slug, name: q.page || g.page }; }
+  function pageUrl(slug) { return BP + '/' + (slug ? slug + '/' : ''); }
+
+  function readLast() {
+    try { var v = JSON.parse(localStorage.getItem(STORE) || 'null'); return v && typeof v.score === 'number' ? v : null; } catch (e) { return null; }
+  }
+  function writeLast(v) { try { localStorage.setItem(STORE, JSON.stringify(v)); } catch (e) { /* storage blocked: fine */ } }
+  function showLast() {
+    var el = card.querySelector('[data-exam-last]'), v = readLast();
+    if (!v) { el.hidden = true; return; }
+    el.textContent = 'Your last attempt on this device: ' + v.score + ' of 20, ' + (v.score >= PASS ? 'passed.' : 'not passed yet.');
+    el.hidden = false;
+  }
+
+  function start() {
+    var order = shuffle(BANK);
+    st = { order: order, views: {}, answers: {}, flags: {}, idx: 0, started: Date.now(), end: Date.now() + LIMIT * 1000, said: {}, done: false };
+    order.forEach(function (q) { st.views[q.id] = def(q).prepare(q); });
+    screens.results.classList.remove('training-exam-drawn');
+    buildQuiz();
+    show('quiz');
+    renderQuestion(true);
+    tick();
+    clearInterval(ticker);
+    ticker = setInterval(tick, 250);
+    say('Exam started. ' + (LIMIT >= 60 ? Math.round(LIMIT / 60) + ' minutes' : LIMIT + ' seconds') + ' on the clock, 20 questions.');
+  }
+
+  function buildQuiz() {
+    var q = screens.quiz;
+    q.innerHTML =
+      '<div class="training-exam-bar">' +
+        '<div class="training-exam-timer" role="timer" aria-label="Time left" data-timer><span>Time left</span> <b data-time>' + clock(LIMIT) + '</b></div>' +
+        '<div class="training-exam-progress" data-progress></div>' +
+        '<div class="training-exam-track" aria-hidden="true"><i data-track></i></div>' +
+      '</div>' +
+      '<div class="training-exam-layout">' +
+        '<div class="training-exam-main">' +
+          '<div class="training-exam-qhead"><span class="training-exam-qnum" data-qnum></span><span class="training-exam-tag" data-qtype></span><span class="training-exam-flagnote" data-flagnote hidden>Flagged</span></div>' +
+          '<div class="training-exam-qbody" data-qbody>' +
+            '<h3 class="training-exam-prompt" id="training-exam-prompt" tabindex="-1" data-prompt></h3>' +
+            '<div class="training-exam-answer" role="group" aria-labelledby="training-exam-prompt" data-host></div>' +
+          '</div>' +
+          '<div class="training-exam-nav">' +
+            '<button type="button" class="pb-btn ghost" data-prev>&larr; Previous</button>' +
+            '<button type="button" class="pb-btn ghost training-exam-flag" aria-pressed="false" data-flag>Flag for review</button>' +
+            '<button type="button" class="pb-btn" data-next>Next &rarr;</button>' +
+          '</div>' +
+        '</div>' +
+        '<aside class="training-exam-side" aria-label="Question map and submit">' +
+          '<h4 class="training-exam-h4" id="training-exam-maph">Question map</h4>' +
+          '<ol class="training-exam-map" aria-labelledby="training-exam-maph" data-map></ol>' +
+          '<ul class="training-exam-key" aria-hidden="true"><li><i class="a"></i>Answered</li><li><i class="f"></i>Flagged</li><li><i class="c"></i>Current</li></ul>' +
+          '<button type="button" class="pb-btn red training-exam-submit" data-submit>Submit the exam</button>' +
+          '<div class="training-exam-confirm" role="alertdialog" aria-modal="false" aria-labelledby="training-exam-ctitle" aria-describedby="training-exam-cmsg" data-confirm hidden>' +
+            '<p class="training-exam-ctitle" id="training-exam-ctitle" tabindex="-1"><b>Submit now?</b></p>' +
+            '<p id="training-exam-cmsg" data-cmsg></p>' +
+            '<div class="training-exam-cbtns"><button type="button" class="pb-btn red" data-confirm-yes>Submit now</button><button type="button" class="pb-btn ghost" data-confirm-no>Keep working</button></div>' +
+          '</div>' +
+        '</aside>' +
+      '</div>';
+    var map = q.querySelector('[data-map]');
+    st.order.forEach(function (x, i) {
+      var li = document.createElement('li');
+      li.innerHTML = '<button type="button" class="training-exam-mapbtn" data-goto="' + i + '">' + (i + 1) + '</button>';
+      map.appendChild(li);
+    });
+    q.querySelector('[data-prev]').onclick = function () { go(st.idx - 1); };
+    q.querySelector('[data-next]').onclick = function () { go(st.idx + 1); };
+    q.querySelector('[data-flag]').onclick = function () {
+      var id = st.order[st.idx].id;
+      st.flags[id] = !st.flags[id];
+      updateChrome();
+      say(st.flags[id] ? 'Question ' + (st.idx + 1) + ' flagged for review.' : 'Flag removed.');
+    };
+    map.onclick = function (e) { var b = e.target.closest('[data-goto]'); if (b) go(+b.getAttribute('data-goto')); };
+    map.onkeydown = function (e) {
+      var b = e.target.closest('[data-goto]'); if (!b) return;
+      var i = +b.getAttribute('data-goto'), n = st.order.length, to = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = (i + 1) % n;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') to = (i - 1 + n) % n;
+      else if (e.key === 'Home') to = 0; else if (e.key === 'End') to = n - 1;
+      if (to === null) return;
+      e.preventDefault();
+      map.querySelectorAll('[data-goto]')[to].focus();
+    };
+    var host = q.querySelector('[data-host]');
+    host.addEventListener('change', save);
+    q.querySelector('[data-submit]').onclick = openConfirm;
+    q.querySelector('[data-confirm-no]').onclick = function () { closeConfirm(); q.querySelector('[data-submit]').focus(); };
+    q.querySelector('[data-confirm-yes]').onclick = function () { submit(false); };
+  }
+
+  function save() {
+    var q = st.order[st.idx], host = screens.quiz.querySelector('[data-host]');
+    st.answers[q.id] = def(q).read(q, st.views[q.id], host);
+    updateChrome();
+    if (!screens.quiz.querySelector('[data-confirm]').hidden) fillConfirm();
+  }
+
+  function go(i) {
+    if (i < 0 || i >= st.order.length || i === st.idx) return;
+    st.idx = i;
+    renderQuestion(true);
+  }
+
+  function renderQuestion(focus) {
+    var q = st.order[st.idx], d = def(q), root = screens.quiz;
+    root.querySelector('[data-qnum]').textContent = 'Question ' + (st.idx + 1) + ' of ' + st.order.length;
+    root.querySelector('[data-qtype]').textContent = d.label;
+    root.querySelector('[data-prompt]').innerHTML = fmt(q.prompt);
+    var body = root.querySelector('[data-qbody]');
+    body.classList.remove('training-exam-in'); void body.offsetWidth; body.classList.add('training-exam-in');
+    var host = root.querySelector('[data-host]');
+    host.setAttribute('data-qid', q.id);
+    host.setAttribute('data-type', q.type);
+    d.render(q, st.views[q.id], st.answers[q.id], host);
+    root.querySelector('[data-prev]').disabled = st.idx === 0;
+    root.querySelector('[data-next]').disabled = st.idx === st.order.length - 1;
+    updateChrome();
+    if (focus) root.querySelector('[data-prompt]').focus({ preventScroll: true });
+    var top = section.querySelector('.training-exam-card').getBoundingClientRect().top;
+    if (focus && (top < 0 || top > window.innerHeight * 0.6)) root.scrollIntoView({ block: 'start', behavior: (window.PB && PB.reduced) ? 'auto' : 'smooth' });
+  }
+
+  function counts() {
+    var a = 0, f = 0;
+    st.order.forEach(function (q) { if (isAnswered(q)) a++; if (st.flags[q.id]) f++; });
+    return { answered: a, flagged: f, unanswered: st.order.length - a };
+  }
+
+  function updateChrome() {
+    var root = screens.quiz, c = counts(), q = st.order[st.idx], flagged = !!st.flags[q.id];
+    root.querySelector('[data-progress]').textContent = c.answered + ' of ' + st.order.length + ' answered' + (c.flagged ? ', ' + c.flagged + ' flagged' : '');
+    root.querySelector('[data-track]').style.width = (100 * c.answered / st.order.length) + '%';
+    var fb = root.querySelector('[data-flag]');
+    fb.setAttribute('aria-pressed', flagged ? 'true' : 'false');
+    fb.textContent = flagged ? 'Flagged for review' : 'Flag for review';
+    root.querySelector('[data-flagnote]').hidden = !flagged;
+    [].forEach.call(root.querySelectorAll('[data-goto]'), function (b, i) {
+      var x = st.order[i], ans = isAnswered(x), fl = !!st.flags[x.id];
+      b.classList.toggle('a', ans);
+      b.classList.toggle('f', fl);
+      if (i === st.idx) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      b.setAttribute('aria-label', 'Question ' + (i + 1) + ', ' + (ans ? 'answered' : 'not answered') + (fl ? ', flagged' : ''));
+    });
+  }
+
+  function fillConfirm() {
+    var c = counts(), parts = [];
+    if (c.unanswered) parts.push(c.unanswered + (c.unanswered === 1 ? ' question is' : ' questions are') + ' not answered. Unanswered questions count as wrong.');
+    else parts.push('All ' + st.order.length + ' questions are answered.');
+    if (c.flagged) parts.push(c.flagged + (c.flagged === 1 ? ' question is' : ' questions are') + ' still flagged for review.');
+    parts.push('You cannot change answers after you submit.');
+    screens.quiz.querySelector('[data-cmsg]').textContent = parts.join(' ');
+    var box = screens.quiz.querySelector('[data-confirm]');
+    box.classList.toggle('warn', c.unanswered > 0);
+  }
+  function openConfirm() {
+    fillConfirm();
+    var box = screens.quiz.querySelector('[data-confirm]');
+    box.hidden = false;
+    screens.quiz.querySelector('[data-submit]').hidden = true;
+    box.querySelector('[data-confirm-no]').focus();
+  }
+  function closeConfirm() {
+    screens.quiz.querySelector('[data-confirm]').hidden = true;
+    screens.quiz.querySelector('[data-submit]').hidden = false;
+  }
+
+  function tick() {
+    if (!st || st.done) return;
+    var left = Math.max(0, Math.ceil((st.end - Date.now()) / 1000));
+    var t = screens.quiz.querySelector('[data-timer]');
+    t.querySelector('[data-time]').textContent = clock(left);
+    t.classList.toggle('training-exam-low', left <= 120);
+    t.classList.toggle('training-exam-crit', left <= 60);
+    [[300, '5 minutes left.'], [60, '1 minute left.']].forEach(function (p) {
+      if (LIMIT > p[0] && left <= p[0] && left > 0 && !st.said[p[0]]) { st.said[p[0]] = true; say(p[1]); }
+    });
+    if (left === 0) submit(true);
+  }
+
+  function submit(timedOut) {
+    if (!st || st.done) return;
+    st.done = true;
+    clearInterval(ticker);
+    var used = Math.min(LIMIT, (Date.now() - st.started) / 1000);
+    var groups = {}, score = 0;
+    GROUP_ORDER.forEach(function (g) { groups[g] = { right: 0, total: 0, missed: [] }; });
+    var rows = st.order.map(function (q, i) {
+      var ok = def(q).grade(q, st.answers[q.id]);
+      var g = groups[q.group];
+      g.total++;
+      if (ok) { g.right++; score++; } else g.missed.push(i + 1);
+      return { q: q, ok: ok, n: i + 1 };
+    });
+    var passed = score >= PASS;
+    writeLast({ score: score, when: new Date().toISOString() });
+    renderResults(rows, groups, score, passed, used, timedOut);
+    show('results');
+    var h = screens.results.querySelector('[data-rtitle]');
+    h.focus({ preventScroll: true });
+    screens.results.scrollIntoView({ block: 'start', behavior: 'auto' });
+    say((timedOut ? 'Time is up. The exam was submitted. ' : 'Exam submitted. ') + 'You scored ' + score + ' of 20. ' + (passed ? 'Passed.' : 'Not passed.'));
+  }
+
+  function renderResults(rows, groups, score, passed, used, timedOut) {
+    var r = screens.results;
+    var html = '<div class="training-exam-score ' + (passed ? 'pass' : 'fail') + '">' +
+      '<div class="training-exam-ring" aria-hidden="true"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"></circle><circle class="fg" cx="60" cy="60" r="52" style="--p:' + (score / 20) + '"></circle></svg><b>' + score + '</b></div>' +
+      '<div class="training-exam-sumtext">' +
+        '<h3 class="training-exam-rtitle" tabindex="-1" data-rtitle>' + (passed ? 'Passed' : 'Not passed yet') + ': ' + score + ' of 20</h3>' +
+        '<p>' + (passed ? 'You reached the pass mark of 16.' : 'The pass mark is 16. Review the missed topics below, then retake the exam.') + '</p>' +
+        '<p class="training-exam-meta">Time used: ' + clock(used) + ' of ' + clock(LIMIT) + (timedOut ? '. Time ran out, so the exam was submitted automatically.' : '') + '</p>' +
+      '</div></div>';
+
+    html += '<h4 class="training-exam-h4">By stage</h4><ul class="training-exam-break">';
+    GROUP_ORDER.forEach(function (k) {
+      var g = groups[k], G = GROUPS[k];
+      if (!g.total) return;
+      var full = g.right === g.total;
+      html += '<li class="' + (full ? 'ok' : 'miss') + '"><span class="training-exam-bname">' + G.label + '</span>' +
+        '<span class="training-exam-bbar" aria-hidden="true"><i style="--w:' + (100 * g.right / g.total) + '%"></i></span>' +
+        '<span class="training-exam-bnum">' + g.right + ' of ' + g.total + '</span>' +
+        (full ? '<span class="training-exam-blink"></span>' : '<a class="training-exam-blink" href="#training-lesson-' + G.lesson + '">Revisit lesson ' + G.lesson + '</a>') + '</li>';
+    });
+    html += '</ul>';
+
+    html += '<div class="training-exam-rhead"><h4 class="training-exam-h4">Review every question</h4>' +
+      '<label class="training-exam-only"><input type="checkbox" data-only-missed> Show only missed questions</label></div><ol class="training-exam-review" data-review>';
+    rows.forEach(function (row) {
+      var q = row.q, rv = def(q).review(q, st.answers[q.id]), answered = isAnswered(q);
+      var status = row.ok ? 'Correct' : (answered ? 'Missed' : 'Not answered');
+      var pg = pageOf(q), ln = lessonOf(q);
+      html += '<li class="training-exam-ritem ' + (row.ok ? 'ok' : 'miss') + '">' +
+        '<div class="training-exam-rtop"><span class="training-exam-qnum">Question ' + row.n + '</span><span class="training-exam-tag">' + GROUPS[q.group].label + '</span><span class="training-exam-status">' + status + '</span></div>' +
+        '<p class="training-exam-rq">' + fmt(q.prompt) + '</p>' +
+        '<div class="training-exam-cols"><div><b>Your answer</b>' + rv.yours + '</div><div><b>Right answer</b>' + rv.right + '</div></div>' +
+        '<p class="training-exam-why"><b>Why:</b> ' + esc(q.why) + '</p>' +
+        (row.ok ? '' : '<p class="training-exam-links"><a href="#training-lesson-' + ln + '">Go back to lesson ' + ln + '</a><a href="' + pageUrl(pg.slug) + '">Read the ' + esc(pg.name) + ' page</a></p>') +
+        '</li>';
+    });
+    html += '</ol><div class="training-exam-again"><button type="button" class="pb-btn red" data-retake>Retake the exam</button><span>New attempt, new order, full ' + clock(LIMIT) + ' on the clock.</span></div>';
+    r.innerHTML = html;
+    r.querySelector('[data-retake]').onclick = function () { start(); };
+    r.querySelector('[data-only-missed]').onchange = function (e) { r.querySelector('[data-review]').classList.toggle('training-exam-onlymiss', e.target.checked); };
+    requestAnimationFrame(function () { requestAnimationFrame(function () { r.classList.add('training-exam-drawn'); }); });
+  }
+
+  card.querySelector('[data-exam-start]').onclick = start;
+  showLast();
+})();
 </script>
 
 </body>
