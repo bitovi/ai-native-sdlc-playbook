@@ -520,8 +520,9 @@
           <ul class="training-points">
             <li>It starts from an idea, a ticket, or an alert.</li>
             <li><span class="pb-chip human">Originator</span> describes the problem in their own words. No formal language needed.</li>
-            <li><span class="pb-chip agent">Claude</span> asks the analyst's questions: scope, users, constraints, and what success looks like. Then it writes the file from the team's template.</li>
+            <li><span class="pb-chip agent">Claude</span> asks the analyst's questions: scope, users, constraints, and what success looks like. Then it writes the file from the team's template, and the originator corrects any misunderstanding.</li>
             <li><span class="pb-chip human">Product owner</span> reviews and corrects it before it is committed. Accepting it starts design.</li>
+            <li>No Git experience needed: a connector, such as GitHub, lets Claude commit the file for them.</li>
           </ul>
         </div>
         <aside class="training-aside">
@@ -551,9 +552,9 @@
       <div class="training-concept pb-reveal d1">
         <div class="training-concept-main">
           <ul class="training-points">
-            <li><b>Spec.</b> <span class="pb-chip agent">Claude</span> turns the approved <span class="pb-file">intent.md</span> into <span class="pb-file">spec.md</span>, guided by the team's skills for brand, security, compliance, and UX. It flags areas of concern. The product owner reviews the spec and does not write it.</li>
+            <li><b>Spec.</b> <span class="pb-chip agent">Claude</span> turns the approved <span class="pb-file">intent.md</span> into <span class="pb-file">spec.md</span>, guided by the team's skills for brand, security, compliance, and UX. It flags areas of concern. The product owner reviews the spec and does not write it, resolves each concern with its policy owner, and decides if it goes to build.</li>
             <li><b>Plan mode first.</b> In plan mode Claude can read the code and cannot change it. The plan names the files, the order of work, and the tests. The engineer corrects it and commits <span class="pb-file">plan.md</span>.</li>
-            <li><b>CLAUDE.md.</b> What a new joiner needs on day one: commands, the conventions that matter, and what Claude keeps getting wrong. Claude reads all of it at the start of every session. Keep it <b>under a page</b>. When Claude makes a mistake twice, the fix goes in.</li>
+            <li><b>CLAUDE.md.</b> What a new joiner needs on day one: commands, the conventions that matter, and what Claude keeps getting wrong. Check it into Git at the repo root. Claude reads all of it every session, so keep it <b>under a page</b>. When Claude makes a mistake twice, the fix goes in.</li>
             <li><b>Skill or hook?</b> A skill holds a policy to apply consistently, and it is advisory. A hook is deterministic, for rules that must always hold.</li>
           </ul>
         </div>
@@ -618,7 +619,7 @@
             <li><b>AI in PR review.</b> <span class="pb-chip agent">Claude</span> reviews every PR in the passes set in <span class="pb-file">REVIEW.md</span>: bugs, security, and compliance with <span class="pb-file">spec.md</span> and <span class="pb-file">plan.md</span>. It ranks findings as Important or Nit, with at most five nits per review.</li>
             <li>Findings do not approve or block a PR on their own. <span class="pb-chip human">A code owner</span> approves through branch protection. The agent that wrote the code has no way to approve it.</li>
             <li><b>Hooks as approval gates.</b> <span class="pb-chip gate">A hook</span> is a script that runs before Claude acts and can allow, ask, or block. A block names the route to approval.</li>
-            <li><b>CI/CD.</b> Claude runs in the pipeline for judgment steps, in a sandbox. Everything it writes arrives as a PR. Deploy, status, and rollback are tools per environment.</li>
+            <li><b>CI/CD.</b> Claude runs in the pipeline, in a sandbox. Roll it out in order: read-only judgment steps, then write steps that arrive as PRs, then deploy, status, and rollback as MCP tools per environment, then autonomy tiered by environment.</li>
           </ul>
         </div>
         <aside class="training-aside">
@@ -646,12 +647,12 @@
       </div>
       <div class="training-concept pb-reveal d1">
         <div class="training-concept-main">
-          <p>A deterministic script watches one metric. No model is involved in detection. The baseline is the mean of the last 30 days of hourly readings, and sigma (&sigma;) is the standard deviation.</p>
+          <p>A deterministic script watches one metric. It is version controlled and unit tested, and no model is involved in detection. The baseline is the mean of the last 30 days of hourly readings, and sigma (&sigma;) is the standard deviation.</p>
           <ul class="training-points">
             <li><b>1&sigma;:</b> only log. Readings land here often by chance.</li>
             <li><b>2&sigma;:</b> Claude diagnoses, read-only.</li>
             <li><b>3&sigma;:</b> Claude may act, only by opening a PR into the review gate or by running a pre-approved runbook such as rollback.</li>
-            <li><b>Slow drift</b> counts as 2&sigma;: four of the last five readings above 1&sigma;, or eight in a row above the mean.</li>
+            <li><b>Slow drift</b> that may never cross 3&sigma; still counts as 2&sigma;: four of the last five readings above 1&sigma;, or eight in a row above the mean.</li>
             <li>Claude writes its diagnosis as a new <span class="pb-file">intent.md</span>. <span class="pb-chip human">The service owner</span> triages it: fix now, schedule, or dismiss.</li>
           </ul>
         </div>
@@ -683,7 +684,7 @@
           <h2>Now check what stuck</h2>
           <p class="pb-lede" data-training-close-msg>You have 0 of 6 lessons done. You can take the exam at any time.</p>
         </div>
-        <a class="pb-btn red training-close-btn" href="#training-exam">Start the 15 minute exam</a>
+        <a class="pb-btn red training-close-btn" href="#training-exam">Start the 15-minute exam</a>
       </div>
     </div>
   </section>
@@ -1389,7 +1390,7 @@
       why: 'Flagged concerns come first, because they are what an analyst would have escalated. The product owner resolves each one with its policy owner before engineering sees the spec.' },
 
     { id: 'q8', group: 'design', type: 'single',
-      prompt: 'Who does what with {spec.md}?',
+      prompt: 'In the AI-native SDLC, who does what with {spec.md}?',
       options: [
         { id: 'a', text: 'Claude drafts it with the org\'s skills applied. The product owner reviews it and decides if it goes to build.' },
         { id: 'b', text: 'The product owner writes it. Claude approves it.' },
@@ -1466,8 +1467,8 @@
         { id: 'a', text: 'Collect 20 to 50 real tasks from recent work, each with its accepted outcome' },
         { id: 'b', text: 'Run the suite on a schedule and on any change to CLAUDE.md, skills, or hooks' },
         { id: 'c', text: 'Add an eval for each production incident and keep it as a regression test' },
-        { id: 'd', text: 'Add --bare to the claude -p call so runs go faster' },
-        { id: 'e', text: 'Let the agent edit the checks when a case no longer fits' }
+        { id: 'd', text: 'Add --bare to the claude -p call, which skips CLAUDE.md, skills, and hooks, so runs go faster' },
+        { id: 'e', text: 'Let the agent under test edit the checks during a run when it cannot pass them' }
       ],
       answer: ['a', 'b', 'c'],
       why: 'The --bare flag skips CLAUDE.md, skills, and hooks, which are the things under test. The check script fails any run that changes files outside the allowed paths, so the agent cannot rewrite its checks.' },
@@ -1491,7 +1492,7 @@
         { id: 'i3', text: 'Production', answer: 'c3' }
       ],
       choices: [
-        { id: 'c1', text: 'Nobody, the hook allows it' },
+        { id: 'c1', text: 'Nobody: the hook allows it' },
         { id: 'c2', text: 'The engineer, or the approved merge when the pipeline runs on main' },
         { id: 'c3', text: 'The release manager, through an approved change ticket' }
       ],
@@ -1534,7 +1535,7 @@
       options: [
         { id: 'a', text: 'It is deterministic, with no model involved' },
         { id: 'b', text: 'It is version controlled and unit tested' },
-        { id: 'c', text: 'Its drift rules catch slow changes that never cross 3σ' },
+        { id: 'c', text: 'Its drift rules catch slow changes that may never cross 3σ' },
         { id: 'd', text: 'Claude computes the baseline and decides the tier' },
         { id: 'e', text: 'Every reading above 1σ starts a Claude session' }
       ],
