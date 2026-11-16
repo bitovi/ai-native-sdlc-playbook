@@ -25,7 +25,8 @@
     { slug: 'test', title: 'Stage 4: Test', short: 'Test', stage: 4, plays: ['Give Claude a feedback loop', 'Continuous evals in CI'] },
     { slug: 'deploy', title: 'Stage 5: Deploy', short: 'Deploy', stage: 5, plays: ['AI in the PR review loop', 'Hooks as approval gates', 'CI/CD integration and deployment'] },
     { slug: 'maintain', title: 'Stage 6: Maintain', short: 'Maintain', stage: 6, plays: ['Closing the loop on metrics'] },
-    { slug: 'roadmap', title: 'Your transition roadmap', short: 'Roadmap' }
+    { slug: 'roadmap', title: 'Your transition roadmap', short: 'Roadmap' },
+    { slug: 'training', title: 'Training and exam', short: 'Training' }
   ];
   var STAGES = PAGES.filter(function (p) { return p.stage; });
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
